@@ -17,8 +17,9 @@ export type AWBStatus =
   | "MANIFEST_DECONSOLIDATED"
   | "CUSTOMS_PRESENTED"
   | "CUSTOMS_CLEARED"
-  | "DELIVERED"
-  | "CANCELLED";
+  | "MANIFEST_REGISTERED"
+  | "PROCESS_COMPLETED"
+  | "INVOICED";
 
 export interface Customer {
   id: number;

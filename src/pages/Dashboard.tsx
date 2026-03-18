@@ -16,8 +16,8 @@ const Dashboard = () => {
 
   useEffect(() => { fetchAWBs(); fetchInvoices(); }, []);
 
-  const activeOps = awbs.filter((a) => a.status !== "DELIVERED" && a.status !== "CANCELLED").length;
-  const completedOps = awbs.filter((a) => a.status === "DELIVERED").length;
+  const activeOps = awbs.filter((a) => a.status !== "INVOICED" && a.status !== "PROCESS_COMPLETED").length;
+  const completedOps = awbs.filter((a) => a.status === "INVOICED").length;
   const pendingInvoice = invoices.filter((i) => i.status !== "PAID" && i.status !== "CANCELLED").length;
   const monthlyRevenue = invoices.reduce((acc, i) => acc + i.totalAmount, 0);
 

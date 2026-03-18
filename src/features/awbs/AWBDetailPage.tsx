@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { AWB_WORKFLOW, STATUS_COLORS, STATUS_LABELS } from "@/constants/awbStatuses";
+import { AWB_WORKFLOW, STATUS_COLORS, STATUS_LABELS, AWB_TRANSITIONS } from "@/constants/awbStatuses";
 import type { AWBStatus } from "@/lib/types";
 
 export default function AWBDetailPage() {
@@ -175,7 +175,7 @@ export default function AWBDetailPage() {
               <Select value={newStatus} onValueChange={setNewStatus}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar estado" /></SelectTrigger>
                 <SelectContent>
-                  {states.filter((_, i) => i > currentIdx).map((s) => (
+                  {(AWB_TRANSITIONS[awb.status as AWBStatus] || []).map((s) => (
                     <SelectItem key={s} value={s}>{STATUS_LABELS[s] || s}</SelectItem>
                   ))}
                 </SelectContent>
