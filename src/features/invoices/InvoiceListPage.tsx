@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useInvoiceStore } from "@/stores/invoiceStore";
 import { useAuthStore } from "@/stores/authStore";
 import { motion } from "framer-motion";
-import { Search, Plus, FileText } from "lucide-react";
+import { Search, Plus, FileText, Download, CalendarDays } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +12,8 @@ import { AppBreadcrumb } from "@/components/molecules/AppBreadcrumb";
 import { TablePagination } from "@/components/molecules/TablePagination";
 import { EmptyState } from "@/components/molecules/EmptyState";
 import { SortableHeader, type SortDir, toggleSort, useSort } from "@/components/molecules/SortableHeader";
+import { invoiceService } from "@/services/invoiceService";
+import { useToast } from "@/hooks/use-toast";
 
 const statusStyle: Record<string, { bg: string; text: string; label: string }> = {
   DRAFT: { bg: "bg-muted/50", text: "text-muted-foreground", label: "Borrador" },
@@ -25,6 +27,7 @@ export default function InvoiceListPage() {
   const { invoices, loading, fetchInvoices } = useInvoiceStore();
   const { hasPermission } = useAuthStore();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -34,6 +37,32 @@ export default function InvoiceListPage() {
   const { sortData } = useSort(invoices);
 
   useEffect(() => { fetchInvoices(); }, []);
+
+  const handleGenerateMonthly = async () => {
+    const now = new Date();
+    try {
+      await invoiceService.generateMonthly(now.getMonth() + 1, now.getFullYear());
+      toast({ title: "Facturas generadas", description: "Se generaron las facturas del mes actual" });
+      fetchInvoices();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.response?.data?.message || err.message, variant: "destructive" });
+    }
+  };
+
+  const handleDownloadPDF = async (e: React.MouseEvent, invoiceId: number) => {
+    e.stopPropagation();
+    try {
+      const blob = await invoiceService.exportPDF(invoiceId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `factura-${invoiceId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   const filtered = invoices.filter((inv) => {
     const matchSearch = !search ||
@@ -61,11 +90,18 @@ export default function InvoiceListPage() {
           <h1 className="text-2xl font-bold text-foreground">Facturación</h1>
           <p className="text-sm text-muted-foreground">{invoices.length} facturas · Pendiente: {formatCurrency(pendingBilling)}</p>
         </div>
-        {hasPermission("invoices.create") && (
-          <Button onClick={() => navigate("/invoices/new")} className="gradient-primary text-primary-foreground gap-2">
-            <Plus className="h-4 w-4" /> Nueva Factura
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {hasPermission("invoices.create") && (
+            <Button onClick={handleGenerateMonthly} variant="outline" className="gap-2">
+              <CalendarDays className="h-4 w-4" /> Generar mensual
+            </Button>
+          )}
+          {hasPermission("invoices.create") && (
+            <Button onClick={() => navigate("/invoices/new")} className="gradient-primary text-primary-foreground gap-2">
+              <Plus className="h-4 w-4" /> Nueva Factura
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -107,6 +143,7 @@ export default function InvoiceListPage() {
                   <SortableHeader label="Fecha" field="issueDate" currentField={sortField} currentDir={sortDir} onSort={handleSort} />
                   <SortableHeader label="Total" field="totalAmount" currentField={sortField} currentDir={sortDir} onSort={handleSort} className="text-right" />
                   <SortableHeader label="Estado" field="status" currentField={sortField} currentDir={sortDir} onSort={handleSort} />
+                  <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-10"></th>
                 </tr>
               </thead>
               <tbody>
@@ -126,6 +163,11 @@ export default function InvoiceListPage() {
                       <td className="p-4 text-sm text-muted-foreground">{inv.issueDate}</td>
                       <td className="p-4 text-right font-semibold text-foreground">{formatCurrency(inv.totalAmount)}</td>
                       <td className="p-4"><span className={`status-badge ${ss.bg} ${ss.text}`}>{ss.label}</span></td>
+                      <td className="p-4">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => handleDownloadPDF(e, inv.id)} title="Descargar PDF">
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                      </td>
                     </motion.tr>
                   );
                 })}

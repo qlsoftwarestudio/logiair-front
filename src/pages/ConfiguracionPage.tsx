@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Users, Bell, Plus, Save, AlertCircle } from "lucide-react";
+import { Users, Bell, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,44 +10,71 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/hooks/use-toast";
 import { ROLE_LABELS, type UserRole } from "@/constants/roles";
 import { AppBreadcrumb } from "@/components/molecules/AppBreadcrumb";
-import { authService } from "@/services/authService";
-
-interface ManagedUser {
-  id: string;
-  name: string;
-  lastname: string;
-  email: string;
-  role: UserRole;
-}
+import { TablePagination } from "@/components/molecules/TablePagination";
+import { EmptyState } from "@/components/molecules/EmptyState";
+import { userService, type UserResponseDTO } from "@/services/userService";
 
 export default function ConfiguracionPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"users" | "notifications">("users");
-  const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [users, setUsers] = useState<UserResponseDTO[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
   const [showAdd, setShowAdd] = useState(false);
-  const [newUser, setNewUser] = useState({ name: "", lastname: "", email: "", password: "", role: "" as UserRole });
+  const [showDelete, setShowDelete] = useState<UserResponseDTO | null>(null);
+  const [newUser, setNewUser] = useState({ name: "", lastname: "", email: "", password: "", role: "OPERATOR_LOGISTICS" as UserRole });
   const [creating, setCreating] = useState(false);
   const [notifications, setNotifications] = useState({ statusChange: true, invoiceDue: true, newAWB: false, dailySummary: true });
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const result = await userService.getUsers({ page: page - 1, size: pageSize, sortBy: "id" });
+      setUsers(result.content);
+      setTotalElements(result.totalElements);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.response?.data?.message || "No se pudieron cargar los usuarios", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "users") fetchUsers();
+  }, [activeTab, page, pageSize]);
 
   const handleAddUser = async () => {
     if (!newUser.name || !newUser.lastname || !newUser.email || !newUser.password) return;
     setCreating(true);
     try {
-      await authService.register({
+      await userService.createUser({
         name: newUser.name,
         lastname: newUser.lastname,
         email: newUser.email,
         password: newUser.password,
         role: newUser.role,
       });
-      setUsers([...users, { name: newUser.name, lastname: newUser.lastname, email: newUser.email, role: newUser.role, id: `u${Date.now()}` }]);
       setShowAdd(false);
-      setNewUser({ name: "", lastname: "", email: "", password: "", role: "CUSTOMER" });
+      setNewUser({ name: "", lastname: "", email: "", password: "", role: "OPERATOR_LOGISTICS" });
       toast({ title: "Usuario creado", description: `${newUser.name} ${newUser.lastname} registrado exitosamente` });
+      fetchUsers();
     } catch (err: any) {
       toast({ title: "Error", description: err.response?.data?.message || "No se pudo crear el usuario", variant: "destructive" });
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteUser = async (user: UserResponseDTO) => {
+    try {
+      await userService.deleteUser(user.id);
+      toast({ title: "Usuario eliminado", description: `${user.name} ${user.lastname} fue eliminado` });
+      setShowDelete(null);
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.response?.data?.message || "No se pudo eliminar el usuario", variant: "destructive" });
     }
   };
 
@@ -78,46 +105,60 @@ export default function ConfiguracionPage() {
 
       {activeTab === "users" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border text-sm text-muted-foreground">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>El listado de usuarios del tenant aún no está disponible desde el backend. Podés crear nuevos usuarios con el botón de abajo.</span>
-          </div>
-
           <div className="flex justify-end">
             <Button onClick={() => setShowAdd(true)} className="gradient-primary text-primary-foreground gap-2">
               <Plus className="h-4 w-4" /> Nuevo usuario
             </Button>
           </div>
 
-          {users.length > 0 && (
-            <div className="glass-card overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nombre</th>
-                    <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</th>
-                    <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rol</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((u) => (
-                    <tr key={u.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
-                            {u.name[0]}{u.lastname[0]}
-                          </div>
-                          <span className="font-medium text-foreground">{u.name} {u.lastname}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-sm text-muted-foreground">{u.email}</td>
-                      <td className="p-4 text-sm text-muted-foreground">{ROLE_LABELS[u.role]}</td>
+          <div className="glass-card overflow-hidden">
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground">Cargando...</div>
+            ) : users.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="No hay usuarios"
+                description="Creá el primer usuario del equipo"
+                actionLabel="Nuevo usuario"
+                onAction={() => setShowAdd(true)}
+              />
+            ) : (
+              <>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nombre</th>
+                      <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</th>
+                      <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rol</th>
+                      <th className="text-right p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {users.map((u) => (
+                      <tr key={u.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
+                              {u.name?.[0] || ""}{u.lastname?.[0] || ""}
+                            </div>
+                            <span className="font-medium text-foreground">{u.name} {u.lastname}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm text-muted-foreground">{u.email}</td>
+                        <td className="p-4 text-sm text-muted-foreground">{ROLE_LABELS[u.role as UserRole] || u.role}</td>
+                        <td className="p-4 text-right">
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setShowDelete(u)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <TablePagination page={page} pageSize={pageSize} total={totalElements} onPageChange={setPage} onPageSizeChange={setPageSize} />
+              </>
+            )}
+          </div>
         </motion.div>
       )}
 
@@ -174,7 +215,7 @@ export default function ConfiguracionPage() {
               <Select value={newUser.role} onValueChange={(v) => setNewUser({ ...newUser, role: v as UserRole })}>
                 <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(ROLE_LABELS) as UserRole[]).filter(r => r !== "CLIENT").map((role) => (
+                  {(Object.keys(ROLE_LABELS) as UserRole[]).filter(r => r !== "CUSTOMER").map((role) => (
                     <SelectItem key={role} value={role}>{ROLE_LABELS[role]}</SelectItem>
                   ))}
                 </SelectContent>
@@ -186,6 +227,20 @@ export default function ConfiguracionPage() {
             <Button onClick={handleAddUser} disabled={creating || !newUser.name || !newUser.lastname || !newUser.email || newUser.password.length < 6} className="gradient-primary text-primary-foreground">
               {creating ? "Creando..." : "Crear"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!showDelete} onOpenChange={() => setShowDelete(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>¿Eliminar usuario?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Se eliminará permanentemente a <strong>{showDelete?.name} {showDelete?.lastname}</strong>. Esta acción no se puede deshacer.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDelete(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={() => showDelete && handleDeleteUser(showDelete)}>Eliminar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

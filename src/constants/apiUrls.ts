@@ -5,6 +5,10 @@ export const API_URLS = {
     ONBOARDING: "/auth/onboarding",
     RECOVER: "/auth/recover",
   },
+  USERS: {
+    BASE: "/users",
+    BY_ID: (id: number | string) => `/users/${id}`,
+  },
   AWBS: {
     BASE: "/api/air-waybills",
     BY_ID: (id: number | string) => `/api/air-waybills/${id}`,
@@ -25,5 +29,16 @@ export const API_URLS = {
     BY_ID: (id: number | string) => `/api/invoices/${id}`,
     BY_STATUS: (status: string) => `/api/invoices/status/${status}`,
     BY_CUSTOMER: (customerId: number | string) => `/api/invoices/customer/${customerId}`,
+    BY_CUSTOMER_MONTHLY: (customerId: number | string) => `/api/invoices/customer/${customerId}/monthly`,
+    GENERATE_MONTHLY: "/api/invoices/generate-monthly",
+    EXPORT: (id: number | string) => `/api/invoices/export/${id}`,
+  },
+  REPORTS: {
+    DASHBOARD: "/api/reports/dashboard",
+    OPERATIONS: "/api/reports/operations",
+    CUSTOMERS: "/api/reports/customers",
+    INVOICING: "/api/reports/invoicing",
+    COMMISSIONS: "/api/reports/commissions",
+    EXPORT: (reportType: string) => `/api/reports/export/${reportType}`,
   },
 } as const;

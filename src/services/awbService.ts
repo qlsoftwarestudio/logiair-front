@@ -8,6 +8,8 @@ interface AWBListParams {
   type?: string;
   page?: number;
   size?: number;
+  sortBy?: string;
+  sortDir?: string;
 }
 
 export const awbService = {
@@ -15,8 +17,9 @@ export const awbService = {
     const queryParams: Record<string, any> = {};
     if (params?.page !== undefined) queryParams.page = params.page;
     if (params?.size) queryParams.size = params.size;
+    if (params?.sortBy) queryParams.sortBy = params.sortBy;
+    if (params?.sortDir) queryParams.sortDir = params.sortDir;
 
-    // Use search endpoint if search term provided
     if (params?.search) {
       const response = await api.get(API_URLS.AWBS.SEARCH, {
         params: { search: params.search, ...queryParams },
@@ -24,7 +27,6 @@ export const awbService = {
       return response.data;
     }
 
-    // Use status filter endpoint
     if (params?.status) {
       const response = await api.get(API_URLS.AWBS.BY_STATUS(params.status), {
         params: queryParams,
@@ -67,7 +69,6 @@ export const awbService = {
 
   getAWBsByCustomer: async (customerId: number | string): Promise<AirWaybill[]> => {
     const response = await api.get(API_URLS.AWBS.BY_CUSTOMER(customerId));
-    // May return page or array depending on backend
     return Array.isArray(response.data) ? response.data : response.data.content || [];
   },
 };

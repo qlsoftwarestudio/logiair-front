@@ -1,8 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAWBStore } from "@/stores/awbStore";
-import { useCustomerStore } from "@/stores/customerStore";
-import { useInvoiceStore } from "@/stores/invoiceStore";
 import { useAuthStore } from "@/stores/authStore";
 import { motion } from "framer-motion";
 import { Plane, Users, Receipt, ArrowRight, AlertCircle, Plus, TrendingUp } from "lucide-react";
@@ -11,24 +8,33 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { STATUS_COLORS, STATUS_LABELS } from "@/constants/awbStatuses";
 import { ROLE_LABELS } from "@/constants/roles";
 import { formatCurrency } from "@/utils/formatters";
+import { reportService, type DashboardResponse } from "@/services/reportService";
 
 export default function DashboardPage() {
-  const { awbs, fetchAWBs } = useAWBStore();
-  const { customers, fetchCustomers } = useCustomerStore();
-  const { invoices, fetchInvoices } = useInvoiceStore();
   const { user, hasPermission } = useAuthStore();
   const navigate = useNavigate();
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAWBs();
-    fetchCustomers();
-    if (hasPermission("invoices.view")) fetchInvoices();
+    const load = async () => {
+      try {
+        const data = await reportService.getDashboard();
+        setDashboard(data);
+      } catch (err) {
+        console.error("Failed to load dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  const inProgress = awbs.filter((a) => a.status !== "DELIVERED" && a.status !== "CANCELLED");
-  const completed = awbs.filter((a) => a.status === "DELIVERED");
-  const totalBilling = invoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.totalAmount, 0);
-  const pendingBilling = invoices.filter((i) => i.status !== "PAID" && i.status !== "CANCELLED").reduce((s, i) => s + i.totalAmount, 0);
+  if (loading || !dashboard) {
+    return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando dashboard...</div>;
+  }
+
+  const recentAWBs = dashboard.recentAirWaybills || [];
 
   return (
     <div className="space-y-6">
@@ -39,7 +45,7 @@ export default function DashboardPage() {
             Hola, {user?.name?.split(" ")[0] || "Usuario"} 👋
           </h1>
           <p className="text-sm text-muted-foreground">
-            {ROLE_LABELS[user?.role]} · Panel de control
+            {ROLE_LABELS[user?.role || "OPERATOR_LOGISTICS"]} · Panel de control
           </p>
         </div>
         <div className="flex gap-2">
@@ -58,11 +64,11 @@ export default function DashboardPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Guías activas" value={inProgress.length} badge={`${awbs.length} total`} badgeVariant="info" delay={0} />
-        <StatCard title="Completadas" value={completed.length} badge={`${Math.round((completed.length / (awbs.length || 1)) * 100)}%`} badgeVariant="success" delay={0.05} />
-        <StatCard title="Clientes" value={customers.length} delay={0.1} />
+        <StatCard title="Guías activas" value={dashboard.pendingAirWaybills} badge={`${dashboard.totalAirWaybills} total`} badgeVariant="info" delay={0} />
+        <StatCard title="Completadas" value={dashboard.totalAirWaybills - dashboard.pendingAirWaybills} badge={`${Math.round(((dashboard.totalAirWaybills - dashboard.pendingAirWaybills) / (dashboard.totalAirWaybills || 1)) * 100)}%`} badgeVariant="success" delay={0.05} />
+        <StatCard title="Clientes" value={dashboard.totalCustomers} delay={0.1} />
         {hasPermission("invoices.view") && (
-          <StatCard title="Facturación" value={formatCurrency(totalBilling)} badge={`${formatCurrency(pendingBilling)} pend.`} badgeVariant="warning" delay={0.15} />
+          <StatCard title="Facturas" value={dashboard.totalInvoices} delay={0.15} />
         )}
       </div>
 
@@ -76,7 +82,7 @@ export default function DashboardPage() {
             </Button>
           </div>
           <div className="space-y-2">
-            {awbs.slice(0, 6).map((awb) => {
+            {recentAWBs.slice(0, 6).map((awb: any) => {
               const sc = STATUS_COLORS[awb.status] || { bg: "bg-muted", text: "text-muted-foreground" };
               return (
                 <motion.div
@@ -102,26 +108,24 @@ export default function DashboardPage() {
                 </motion.div>
               );
             })}
+            {recentAWBs.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">No hay operaciones recientes</p>
+            )}
           </div>
         </div>
 
-        {/* Alerts / Quick actions */}
+        {/* Quick actions */}
         <div className="space-y-4">
           <div className="glass-card p-5">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Alertas</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Resumen</h3>
             <div className="space-y-3">
-              {inProgress.slice(0, 3).map((awb) => (
-                <div key={awb.id} className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-xs font-semibold text-foreground">{awb.awbNumber}</p>
-                    <p className="text-xs text-muted-foreground">Pendiente: {STATUS_LABELS[awb.status as keyof typeof STATUS_LABELS] || awb.status}</p>
-                  </div>
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-foreground">{dashboard.pendingAirWaybills} guías pendientes</p>
+                  <p className="text-xs text-muted-foreground">De un total de {dashboard.totalAirWaybills}</p>
                 </div>
-              ))}
-              {inProgress.length === 0 && (
-                <p className="text-xs text-muted-foreground">Sin alertas pendientes</p>
-              )}
+              </div>
             </div>
           </div>
 

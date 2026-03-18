@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "OPERATOR_LOGISTICS" | "ADMINISTRATION" | "CLIENT";
+export type UserRole = "ADMIN" | "OPERATOR_LOGISTICS" | "ADMINISTRATION" | "CUSTOMER";
 
 export interface User {
   id: number;
@@ -30,6 +30,7 @@ export interface Customer {
   address?: string;
   isActive?: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface AirWaybill {
@@ -68,6 +69,7 @@ export interface Invoice {
   status: InvoiceStatus;
   items: InvoiceItem[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 // Spring Boot Page response

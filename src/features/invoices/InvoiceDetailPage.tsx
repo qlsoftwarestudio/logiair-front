@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useInvoiceStore } from "@/stores/invoiceStore";
 import { useAuthStore } from "@/stores/authStore";
-import { ArrowLeft, Edit, Trash2, CheckCircle, XCircle, Send } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, CheckCircle, XCircle, Send, Download } from "lucide-react";
+import { invoiceService } from "@/services/invoiceService";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +26,25 @@ export default function InvoiceDetailPage() {
   const { hasPermission } = useAuthStore();
   const { toast } = useToast();
   const [showDelete, setShowDelete] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!invoice) return;
+    setDownloading(true);
+    try {
+      const blob = await invoiceService.exportPDF(invoice.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${invoice.invoiceNumber}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast({ title: "Error al descargar PDF", description: err.message, variant: "destructive" });
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   useEffect(() => {
     if (id) fetchInvoice(id);
@@ -94,6 +114,9 @@ export default function InvoiceDetailPage() {
               <XCircle className="h-4 w-4" /> Anular
             </Button>
           )}
+          <Button variant="outline" className="gap-2" onClick={handleDownloadPDF} disabled={downloading}>
+            <Download className="h-4 w-4" /> {downloading ? "Descargando..." : "PDF"}
+          </Button>
           {hasPermission("invoices.delete") && (
             <Button variant="outline" className="text-destructive" onClick={() => setShowDelete(true)}>
               <Trash2 className="h-4 w-4" />

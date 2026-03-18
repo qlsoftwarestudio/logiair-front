@@ -7,6 +7,8 @@ interface InvoiceListParams {
   status?: string;
   page?: number;
   size?: number;
+  sortBy?: string;
+  sortDir?: string;
 }
 
 export const invoiceService = {
@@ -14,6 +16,8 @@ export const invoiceService = {
     const queryParams: Record<string, any> = {};
     if (params?.page !== undefined) queryParams.page = params.page;
     if (params?.size) queryParams.size = params.size;
+    if (params?.sortBy) queryParams.sortBy = params.sortBy;
+    if (params?.sortDir) queryParams.sortDir = params.sortDir;
 
     if (params?.status) {
       const response = await api.get(API_URLS.INVOICES.BY_STATUS(params.status), {
@@ -48,5 +52,27 @@ export const invoiceService = {
 
   deleteInvoice: async (id: number | string): Promise<void> => {
     await api.delete(API_URLS.INVOICES.BY_ID(id));
+  },
+
+  getByCustomerMonthly: async (customerId: number | string, month: number, year: number): Promise<Invoice[]> => {
+    const response = await api.get(API_URLS.INVOICES.BY_CUSTOMER_MONTHLY(customerId), {
+      params: { month, year },
+    });
+    return response.data;
+  },
+
+  generateMonthly: async (month: number, year: number, customerId?: number): Promise<Invoice> => {
+    const params: Record<string, any> = { month, year };
+    if (customerId) params.customerId = customerId;
+    const response = await api.post(API_URLS.INVOICES.GENERATE_MONTHLY, null, { params });
+    return response.data;
+  },
+
+  exportPDF: async (id: number | string): Promise<Blob> => {
+    const response = await api.get(API_URLS.INVOICES.EXPORT(id), {
+      params: { format: "pdf" },
+      responseType: "blob",
+    });
+    return response.data;
   },
 };

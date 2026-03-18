@@ -6,6 +6,8 @@ interface CustomerListParams {
   search?: string;
   page?: number;
   size?: number;
+  sortBy?: string;
+  sortDir?: string;
 }
 
 export const customerService = {
@@ -13,6 +15,8 @@ export const customerService = {
     const queryParams: Record<string, any> = {};
     if (params?.page !== undefined) queryParams.page = params.page;
     if (params?.size) queryParams.size = params.size;
+    if (params?.sortBy) queryParams.sortBy = params.sortBy;
+    if (params?.sortDir) queryParams.sortDir = params.sortDir;
 
     if (params?.search) {
       const response = await api.get(API_URLS.CUSTOMERS.SEARCH, {
@@ -25,7 +29,6 @@ export const customerService = {
     return response.data;
   },
 
-  // For select dropdowns - returns all customers without pagination
   getCustomerList: async (): Promise<Customer[]> => {
     const response = await api.get(API_URLS.CUSTOMERS.LIST);
     return response.data;

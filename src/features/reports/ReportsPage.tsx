@@ -1,60 +1,119 @@
 import { useEffect, useState } from "react";
-import { useAWBStore } from "@/stores/awbStore";
-import { useInvoiceStore } from "@/stores/invoiceStore";
-import { useCustomerStore } from "@/stores/customerStore";
 import { motion } from "framer-motion";
-import { Download, Plane, DollarSign, Users, BarChart3 } from "lucide-react";
+import { Download, Plane, DollarSign, Users, BarChart3, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { AppBreadcrumb } from "@/components/molecules/AppBreadcrumb";
 import { formatCurrency } from "@/utils/formatters";
-import { STATUS_LABELS } from "@/constants/awbStatuses";
+import { useToast } from "@/hooks/use-toast";
+import { reportService } from "@/services/reportService";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart as RePieChart, Pie, Cell,
+  PieChart as RePieChart, Pie, Cell, LineChart, Line,
 } from "recharts";
+import { format, subMonths } from "date-fns";
 
 const COLORS = ["hsl(210,100%,50%)", "hsl(142,71%,45%)", "hsl(38,92%,50%)", "hsl(280,65%,60%)", "hsl(0,72%,51%)"];
 
-type ReportTab = "general" | "awbs" | "customers" | "financial";
+type ReportTab = "general" | "operations" | "customers" | "financial" | "commissions";
 
 export default function ReportsPage() {
-  const { awbs, fetchAWBs } = useAWBStore();
-  const { invoices, fetchInvoices } = useInvoiceStore();
-  const { customers, fetchCustomers } = useCustomerStore();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<ReportTab>("general");
+  const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState(format(subMonths(new Date(), 1), "yyyy-MM-dd"));
+  const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [operationsData, setOperationsData] = useState<any>(null);
+  const [customersData, setCustomersData] = useState<any>(null);
+  const [invoicingData, setInvoicingData] = useState<any>(null);
+  const [commissionsData, setCommissionsData] = useState<any>(null);
 
-  useEffect(() => { fetchAWBs(); fetchInvoices(); fetchCustomers(); }, []);
+  const dateParams = { startDate, endDate };
 
-  const imports = awbs.filter((a) => a.operationType === "IMPORT").length;
-  const exports = awbs.filter((a) => a.operationType === "EXPORT").length;
+  useEffect(() => {
+    loadTabData(activeTab);
+  }, [activeTab]);
 
-  const statusCounts = awbs.reduce((acc, a) => {
-    const label = STATUS_LABELS[a.status as keyof typeof STATUS_LABELS] || a.status;
-    acc[label] = (acc[label] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  const pieData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
-  const barData = [{ name: "Importación", value: imports }, { name: "Exportación", value: exports }];
+  const loadTabData = async (tab: ReportTab) => {
+    setLoading(true);
+    try {
+      switch (tab) {
+        case "general":
+          if (!dashboardData) {
+            const data = await reportService.getDashboard();
+            setDashboardData(data);
+          }
+          break;
+        case "operations":
+          const ops = await reportService.getOperations(dateParams);
+          setOperationsData(ops);
+          break;
+        case "customers":
+          if (!customersData) {
+            const cust = await reportService.getCustomerReport();
+            setCustomersData(cust);
+          }
+          break;
+        case "financial":
+          const inv = await reportService.getInvoicingReport(dateParams);
+          setInvoicingData(inv);
+          break;
+        case "commissions":
+          const comm = await reportService.getCommissions(dateParams);
+          setCommissionsData(comm);
+          break;
+      }
+    } catch (err: any) {
+      console.error("Report load error:", err);
+      toast({ title: "Error cargando reporte", description: err.response?.data?.message || err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const totalRevenue = invoices.reduce((s, i) => s + i.totalAmount, 0);
-  const paidRevenue = invoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.totalAmount, 0);
-  const pendingRevenue = invoices.filter((i) => i.status !== "PAID" && i.status !== "CANCELLED").reduce((s, i) => s + i.totalAmount, 0);
+  const handleExport = async (reportType: string, exportFormat: string = "excel") => {
+    try {
+      const blob = await reportService.exportReport(reportType, exportFormat, dateParams);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reporte-${reportType}-${startDate}-${endDate}.${exportFormat === "excel" ? "xlsx" : exportFormat}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "Reporte exportado" });
+    } catch (err: any) {
+      toast({ title: "Error al exportar", description: err.response?.data?.message || err.message, variant: "destructive" });
+    }
+  };
 
-  const topClients = customers.map((c) => ({
-    name: c.companyName,
-    ops: awbs.filter((a) => a.customer?.id === c.id).length,
-    revenue: invoices.filter((i) => i.customer?.id === c.id).reduce((s, inv) => s + inv.totalAmount, 0),
-  })).sort((a, b) => b.ops - a.ops).slice(0, 5);
+  const handleRefresh = () => {
+    switch (activeTab) {
+      case "operations":
+        setOperationsData(null);
+        break;
+      case "financial":
+        setInvoicingData(null);
+        break;
+      case "commissions":
+        setCommissionsData(null);
+        break;
+    }
+    loadTabData(activeTab);
+  };
 
   const tabs = [
     { id: "general" as const, label: "General", icon: BarChart3 },
-    { id: "awbs" as const, label: "AWBs", icon: Plane },
+    { id: "operations" as const, label: "Operaciones", icon: Plane },
     { id: "customers" as const, label: "Clientes", icon: Users },
     { id: "financial" as const, label: "Financiero", icon: DollarSign },
+    { id: "commissions" as const, label: "Comisiones", icon: DollarSign },
   ];
 
   const tooltipStyle = { background: "hsl(220,25%,12%)", border: "1px solid hsl(220,20%,18%)", borderRadius: "8px", color: "hsl(210,20%,92%)" };
+  const needsDateFilter = activeTab === "operations" || activeTab === "financial" || activeTab === "commissions";
 
   return (
     <div className="space-y-6">
@@ -64,7 +123,9 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-bold text-foreground">Reportes</h1>
           <p className="text-sm text-muted-foreground">Análisis operativo y financiero</p>
         </div>
-        <Button variant="outline" className="gap-2"><Download className="h-4 w-4" /> Exportar</Button>
+        <Button variant="outline" className="gap-2" onClick={() => handleExport(activeTab)}>
+          <Download className="h-4 w-4" /> Exportar
+        </Button>
       </div>
 
       <div className="flex gap-1 p-1 bg-secondary/50 rounded-lg w-fit">
@@ -82,104 +143,119 @@ export default function ReportsPage() {
         ))}
       </div>
 
-      {activeTab === "general" && (
+      {needsDateFilter && (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Desde</Label>
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-40 bg-secondary border-border" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Hasta</Label>
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-40 bg-secondary border-border" />
+          </div>
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="gap-1">
+            <Calendar className="h-3 w-3" /> Aplicar
+          </Button>
+        </div>
+      )}
+
+      {loading && <div className="p-8 text-center text-muted-foreground">Cargando reporte...</div>}
+
+      {!loading && activeTab === "general" && dashboardData && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="Total operaciones" value={awbs.length} delay={0} />
-            <StatCard title="Importaciones" value={imports} badge={`${Math.round((imports / (awbs.length || 1)) * 100)}%`} badgeVariant="info" delay={0.05} />
-            <StatCard title="Exportaciones" value={exports} badge={`${Math.round((exports / (awbs.length || 1)) * 100)}%`} badgeVariant="info" delay={0.1} />
-            <StatCard title="Facturación total" value={formatCurrency(totalRevenue)} badge={`${formatCurrency(paidRevenue)} cobrado`} badgeVariant="success" delay={0.15} />
+            <StatCard title="Total operaciones" value={dashboardData.totalAirWaybills} delay={0} />
+            <StatCard title="Pendientes" value={dashboardData.pendingAirWaybills} badgeVariant="warning" delay={0.05} />
+            <StatCard title="Clientes" value={dashboardData.totalCustomers} delay={0.1} />
+            <StatCard title="Facturas" value={dashboardData.totalInvoices} delay={0.15} />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {dashboardData.chartData && dashboardData.chartData.length > 0 && (
             <div className="glass-card p-6">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Operaciones por tipo</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={barData}>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Tendencia de operaciones</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={dashboardData.chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,20%,18%)" />
-                  <XAxis dataKey="name" stroke="hsl(215,15%,55%)" fontSize={12} />
+                  <XAxis dataKey="date" stroke="hsl(215,15%,55%)" fontSize={12} />
                   <YAxis stroke="hsl(215,15%,55%)" fontSize={12} />
                   <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="value" fill="hsl(210,100%,50%)" radius={[6, 6, 0, 0]} />
+                  <Line type="monotone" dataKey="imports" stroke="hsl(210,100%,50%)" strokeWidth={2} name="Importaciones" />
+                  <Line type="monotone" dataKey="exports" stroke="hsl(142,71%,45%)" strokeWidth={2} name="Exportaciones" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {!loading && activeTab === "operations" && operationsData && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+          <div className="glass-card p-6">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Reporte de operaciones</h3>
+            {Array.isArray(operationsData) && operationsData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={operationsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,20%,18%)" />
+                  <XAxis dataKey="date" stroke="hsl(215,15%,55%)" fontSize={12} />
+                  <YAxis stroke="hsl(215,15%,55%)" fontSize={12} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Bar dataKey="imports" fill="hsl(210,100%,50%)" radius={[6, 6, 0, 0]} name="Importaciones" />
+                  <Bar dataKey="exports" fill="hsl(142,71%,45%)" radius={[6, 6, 0, 0]} name="Exportaciones" />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
-            <div className="glass-card p-6">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Distribución por estado</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <RePieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} dataKey="value" label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
-                    {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
+            ) : (
+              <pre className="text-xs text-muted-foreground whitespace-pre-wrap">{JSON.stringify(operationsData, null, 2)}</pre>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+      {!loading && activeTab === "customers" && customersData && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+          <div className="glass-card p-6">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Reporte de clientes</h3>
+            {Array.isArray(customersData) && customersData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={customersData.slice(0, 10)}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,20%,18%)" />
+                  <XAxis dataKey="companyName" stroke="hsl(215,15%,55%)" fontSize={11} />
+                  <YAxis stroke="hsl(215,15%,55%)" fontSize={12} />
                   <Tooltip contentStyle={tooltipStyle} />
-                </RePieChart>
+                  <Bar dataKey="totalOperations" fill="hsl(210,100%,50%)" radius={[6, 6, 0, 0]} name="Operaciones" />
+                </BarChart>
               </ResponsiveContainer>
-            </div>
+            ) : (
+              <pre className="text-xs text-muted-foreground whitespace-pre-wrap">{JSON.stringify(customersData, null, 2)}</pre>
+            )}
           </div>
         </motion.div>
       )}
 
-      {activeTab === "awbs" && (
+      {!loading && activeTab === "financial" && invoicingData && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard title="Total AWBs" value={awbs.length} delay={0} />
-            <StatCard title="Entregadas" value={awbs.filter((a) => a.status === "DELIVERED").length} badgeVariant="success" delay={0.05} />
-            <StatCard title="En proceso" value={awbs.filter((a) => a.status !== "DELIVERED" && a.status !== "CANCELLED").length} badgeVariant="warning" delay={0.1} />
-          </div>
           <div className="glass-card p-6">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">AWBs por estado</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={pieData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,20%,18%)" />
-                <XAxis type="number" stroke="hsl(215,15%,55%)" fontSize={12} />
-                <YAxis dataKey="name" type="category" stroke="hsl(215,15%,55%)" fontSize={11} width={160} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="value" fill="hsl(210,100%,50%)" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Reporte financiero</h3>
+            {Array.isArray(invoicingData) && invoicingData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={invoicingData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,20%,18%)" />
+                  <XAxis dataKey="period" stroke="hsl(215,15%,55%)" fontSize={12} />
+                  <YAxis stroke="hsl(215,15%,55%)" fontSize={12} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatCurrency(v)} />
+                  <Bar dataKey="total" fill="hsl(38,92%,50%)" radius={[6, 6, 0, 0]} name="Facturación" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <pre className="text-xs text-muted-foreground whitespace-pre-wrap">{JSON.stringify(invoicingData, null, 2)}</pre>
+            )}
           </div>
         </motion.div>
       )}
 
-      {activeTab === "customers" && (
+      {!loading && activeTab === "commissions" && commissionsData && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard title="Total clientes" value={customers.length} delay={0} />
-            <StatCard title="Con operaciones" value={customers.filter((c) => awbs.some((a) => a.customer?.id === c.id)).length} delay={0.05} />
-            <StatCard title="Promedio ops/cliente" value={(awbs.length / (customers.length || 1)).toFixed(1)} delay={0.1} />
-          </div>
           <div className="glass-card p-6">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Top clientes por operaciones</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={topClients}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,20%,18%)" />
-                <XAxis dataKey="name" stroke="hsl(215,15%,55%)" fontSize={11} />
-                <YAxis stroke="hsl(215,15%,55%)" fontSize={12} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="ops" fill="hsl(142,71%,45%)" radius={[6, 6, 0, 0]} name="Operaciones" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-      )}
-
-      {activeTab === "financial" && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard title="Facturación total" value={formatCurrency(totalRevenue)} delay={0} />
-            <StatCard title="Cobrado" value={formatCurrency(paidRevenue)} badgeVariant="success" delay={0.05} />
-            <StatCard title="Pendiente cobro" value={formatCurrency(pendingRevenue)} badgeVariant="warning" delay={0.1} />
-          </div>
-          <div className="glass-card p-6">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Facturación por cliente</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={topClients.filter((c) => c.revenue > 0)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,20%,18%)" />
-                <XAxis dataKey="name" stroke="hsl(215,15%,55%)" fontSize={11} />
-                <YAxis stroke="hsl(215,15%,55%)" fontSize={12} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => formatCurrency(v)} />
-                <Bar dataKey="revenue" fill="hsl(38,92%,50%)" radius={[6, 6, 0, 0]} name="Facturación" />
-              </BarChart>
-            </ResponsiveContainer>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Reporte de comisiones</h3>
+            <pre className="text-xs text-muted-foreground whitespace-pre-wrap">{JSON.stringify(commissionsData, null, 2)}</pre>
           </div>
         </motion.div>
       )}

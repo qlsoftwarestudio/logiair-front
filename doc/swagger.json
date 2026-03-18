@@ -1,0 +1,2085 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+      "title": "Logiair OS API",
+      "description": "Sistema Operativo para Despachantes de Aduana - API REST para gestión de guías aéreas",
+      "version": "1.0.0",
+      "contact": {
+        "name": "Logiair OS Team",
+        "email": "support@logiair.com",
+        "url": "https://logiair.com"
+      },
+      "license": {
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT"
+      }
+    },
+    "servers": [
+      {
+        "url": "https://tu-api-logiair.railway.app",
+        "description": "Producción Railway"
+      },
+      {
+        "url": "http://localhost:8080",
+        "description": "Desarrollo Local"
+      }
+    ],
+    "security": [
+      {
+        "Bearer Authentication": []
+      }
+    ],
+    "components": {
+      "securitySchemes": {
+        "Bearer Authentication": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      },
+      "schemas": {
+        "AuthRequest": {
+          "type": "object",
+          "required": ["email", "password"],
+          "properties": {
+            "email": {
+              "type": "string",
+              "format": "email",
+              "example": "usuario@empresa.com"
+            },
+            "password": {
+              "type": "string",
+              "minLength": 6,
+              "example": "password123"
+            }
+          }
+        },
+        "OnboardingRequest": {
+          "type": "object",
+          "required": ["businessName", "taxId", "adminName", "adminEmail", "adminPassword"],
+          "properties": {
+            "businessName": {
+              "type": "string",
+              "example": "Despachante Aduana S.A."
+            },
+            "taxId": {
+              "type": "string",
+              "example": "30-98765432-1"
+            },
+            "adminName": {
+              "type": "string",
+              "example": "Administrador"
+            },
+            "adminEmail": {
+              "type": "string",
+              "format": "email",
+              "example": "admin@despachante.com"
+            },
+            "adminPassword": {
+              "type": "string",
+              "minLength": 6,
+              "example": "Admin123!"
+            }
+          }
+        },
+        "UserRequestDTO": {
+          "type": "object",
+          "required": ["name", "lastname", "email", "role", "password"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "example": "Juan"
+            },
+            "lastname": {
+              "type": "string",
+              "example": "Pérez"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "example": "juan@empresa.com"
+            },
+            "role": {
+              "type": "string",
+              "enum": ["ADMIN", "OPERATOR_LOGISTICS", "ADMINISTRATION"],
+              "example": "OPERATOR_LOGISTICS"
+            },
+            "password": {
+              "type": "string",
+              "minLength": 6,
+              "example": "password123"
+            }
+          }
+        },
+        "CustomerRequest": {
+          "type": "object",
+          "required": ["companyName", "taxId", "contactName", "contactEmail"],
+          "properties": {
+            "companyName": {
+              "type": "string",
+              "example": "Importadora XYZ S.A."
+            },
+            "taxId": {
+              "type": "string",
+              "example": "30-12345678-9"
+            },
+            "contactName": {
+              "type": "string",
+              "example": "Carlos García"
+            },
+            "contactEmail": {
+              "type": "string",
+              "format": "email",
+              "example": "carlos@importadora.com"
+            },
+            "contactPhone": {
+              "type": "string",
+              "example": "+54 11 1234-5678"
+            },
+            "address": {
+              "type": "string",
+              "example": "Av. Corrientes 1000, Buenos Aires"
+            }
+          }
+        },
+        "CustomerResponse": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "companyName": {
+              "type": "string",
+              "example": "Importadora XYZ S.A."
+            },
+            "taxId": {
+              "type": "string",
+              "example": "30-12345678-9"
+            },
+            "contactName": {
+              "type": "string",
+              "example": "Carlos García"
+            },
+            "contactEmail": {
+              "type": "string",
+              "format": "email",
+              "example": "carlos@importadora.com"
+            },
+            "contactPhone": {
+              "type": "string",
+              "example": "+54 11 1234-5678"
+            },
+            "address": {
+              "type": "string",
+              "example": "Av. Corrientes 1000, Buenos Aires"
+            },
+            "isActive": {
+              "type": "boolean",
+              "example": true
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-03-15T12:00:00"
+            }
+          }
+        },
+        "AirWaybillRequest": {
+          "type": "object",
+          "required": ["awbNumber", "operationType", "airline", "origin", "destination", "arrivalOrDepartureDate", "customerId"],
+          "properties": {
+            "awbNumber": {
+              "type": "string",
+              "example": "123-45678901"
+            },
+            "operationType": {
+              "type": "string",
+              "enum": ["IMPORT", "EXPORT"],
+              "example": "IMPORT"
+            },
+            "airline": {
+              "type": "string",
+              "example": "American Airlines"
+            },
+            "origin": {
+              "type": "string",
+              "example": "MIA"
+            },
+            "destination": {
+              "type": "string",
+              "example": "EZE"
+            },
+            "arrivalOrDepartureDate": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-03-15T10:30:00"
+            },
+            "customerId": {
+              "type": "integer",
+              "example": 1
+            },
+            "manifestNumber": {
+              "type": "string",
+              "example": "MAN-2024-001"
+            },
+            "observations": {
+              "type": "string",
+              "example": "Mercancía frágil"
+            }
+          }
+        },
+        "AirWaybillResponse": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "awbNumber": {
+              "type": "string",
+              "example": "123-45678901"
+            },
+            "operationType": {
+              "type": "string",
+              "enum": ["IMPORT", "EXPORT"],
+              "example": "IMPORT"
+            },
+            "airline": {
+              "type": "string",
+              "example": "American Airlines"
+            },
+            "origin": {
+              "type": "string",
+              "example": "MIA"
+            },
+            "destination": {
+              "type": "string",
+              "example": "EZE"
+            },
+            "arrivalOrDepartureDate": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-03-15T10:30:00"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["PRE_ALERT", "AWB_REGISTERED", "MANIFEST_DECONSOLIDATED", "CUSTOMS_PRESENTED", "CUSTOMS_CLEARED", "DELIVERED", "CANCELLED"],
+              "example": "PRE_ALERT"
+            },
+            "manifestNumber": {
+              "type": "string",
+              "example": "MAN-2024-001"
+            },
+            "observations": {
+              "type": "string",
+              "example": "Mercancía frágil"
+            },
+            "customer": {
+              "$ref": "#/components/schemas/CustomerResponse"
+            },
+            "createdBy": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "name": {
+                  "type": "string",
+                  "example": "Juan"
+                },
+                "lastname": {
+                  "type": "string",
+                  "example": "Pérez"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "example": "juan@empresa.com"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": ["ADMIN", "OPERATOR_LOGISTICS", "ADMINISTRATION"],
+                  "example": "OPERATOR_LOGISTICS"
+                }
+              }
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-03-15T12:00:00"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-03-15T14:30:00"
+            }
+          }
+        },
+        "UpdateAirWaybillStatusRequest": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["PRE_ALERT", "AWB_REGISTERED", "MANIFEST_DECONSOLIDATED", "CUSTOMS_PRESENTED", "CUSTOMS_CLEARED", "DELIVERED", "CANCELLED"],
+              "example": "AWB_REGISTERED"
+            },
+            "observations": {
+              "type": "string",
+              "example": "Documentación recibida"
+            }
+          }
+        },
+        "InvoiceItem": {
+          "type": "object",
+          "required": ["description", "quantity", "unitPrice", "taxRate"],
+          "properties": {
+            "description": {
+              "type": "string",
+              "example": "Honorarios de despacho"
+            },
+            "quantity": {
+              "type": "number",
+              "example": 1
+            },
+            "unitPrice": {
+              "type": "number",
+              "format": "double",
+              "example": 1500.00
+            },
+            "taxRate": {
+              "type": "number",
+              "format": "double",
+              "example": 21.0
+            }
+          }
+        },
+        "InvoiceRequest": {
+          "type": "object",
+          "required": ["customerId", "issueDate", "dueDate", "items"],
+          "properties": {
+            "customerId": {
+              "type": "integer",
+              "example": 1
+            },
+            "issueDate": {
+              "type": "string",
+              "format": "date",
+              "example": "2024-03-15"
+            },
+            "dueDate": {
+              "type": "string",
+              "format": "date",
+              "example": "2024-04-15"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/InvoiceItem"
+              }
+            }
+          }
+        },
+        "InvoiceResponse": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1
+            },
+            "invoiceNumber": {
+              "type": "string",
+              "example": "INV-2024-001"
+            },
+            "customer": {
+              "$ref": "#/components/schemas/CustomerResponse"
+            },
+            "issueDate": {
+              "type": "string",
+              "format": "date",
+              "example": "2024-03-15"
+            },
+            "dueDate": {
+              "type": "string",
+              "format": "date",
+              "example": "2024-04-15"
+            },
+            "totalAmount": {
+              "type": "number",
+              "format": "double",
+              "example": 1815.00
+            },
+            "status": {
+              "type": "string",
+              "enum": ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"],
+              "example": "DRAFT"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/InvoiceItem"
+              }
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-03-15T12:00:00"
+            }
+          }
+        },
+        "ErrorResponse": {
+          "type": "object",
+          "properties": {
+            "timestamp": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-03-15T12:00:00"
+            },
+            "status": {
+              "type": "integer",
+              "example": 404
+            },
+            "error": {
+              "type": "string",
+              "example": "Not Found"
+            },
+            "message": {
+              "type": "string",
+              "example": "Air Waybill not found"
+            },
+            "path": {
+              "type": "string",
+              "example": "/api/air-waybills/999"
+            }
+          }
+        },
+        "PageResponse": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "pageable": {
+              "type": "object",
+              "properties": {
+                "pageNumber": {
+                  "type": "integer",
+                  "example": 0
+                },
+                "pageSize": {
+                  "type": "integer",
+                  "example": 10
+                },
+                "sort": {
+                  "type": "object"
+                }
+              }
+            },
+            "totalElements": {
+              "type": "integer",
+              "example": 100
+            },
+            "totalPages": {
+              "type": "integer",
+              "example": 10
+            },
+            "first": {
+              "type": "boolean",
+              "example": true
+            },
+            "last": {
+              "type": "boolean",
+              "example": false
+            }
+          }
+        }
+      }
+    },
+    "paths": {
+      "/auth/onboarding": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Crear tenant y usuario admin",
+          "description": "Crea un nuevo tenant y el usuario administrador inicial",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Tenant y admin creados exitosamente",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "Tenant and admin user created successfully"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Datos inválidos"
+            }
+          }
+        }
+      },
+      "/auth/login": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Login de usuario",
+          "description": "Autentica un usuario y retorna un JWT token",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Login exitoso",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "Login successful"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Credenciales inválidas"
+            }
+          }
+        }
+      },
+      "/auth/register": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Registrar nuevo usuario",
+          "description": "Crea un nuevo usuario dentro de un tenant existente",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRequestDTO"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Usuario creado exitosamente",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "User registered successfully"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Datos inválidos"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/customers": {
+        "get": {
+          "tags": ["Customers"],
+          "summary": "Listar clientes (paginado)",
+          "description": "Obtiene un listado paginado de clientes del tenant",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Número de página (0-based)",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "description": "Tamaño de página",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "description": "Campo de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "default": "companyName"
+              }
+            },
+            {
+              "name": "sortDir",
+              "in": "query",
+              "description": "Dirección de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "default": "asc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Listado de clientes",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PageResponse"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/CustomerResponse"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        },
+        "post": {
+          "tags": ["Customers"],
+          "summary": "Crear cliente",
+          "description": "Crea un nuevo cliente en el tenant",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Cliente creado exitosamente",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CustomerResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Datos inválidos"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/customers/search": {
+        "get": {
+          "tags": ["Customers"],
+          "summary": "Buscar clientes",
+          "description": "Busca clientes por término de búsqueda",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "search",
+              "in": "query",
+              "description": "Término de búsqueda",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Número de página (0-based)",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "description": "Tamaño de página",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "description": "Campo de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "default": "companyName"
+              }
+            },
+            {
+              "name": "sortDir",
+              "in": "query",
+              "description": "Dirección de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "default": "asc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Resultados de búsqueda",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PageResponse"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/CustomerResponse"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/customers/list": {
+        "get": {
+          "tags": ["Customers"],
+          "summary": "Listar todos los clientes",
+          "description": "Obtiene un listado completo de clientes (para selects)",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Listado completo de clientes",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/CustomerResponse"
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/customers/{id}": {
+        "get": {
+          "tags": ["Customers"],
+          "summary": "Obtener cliente por ID",
+          "description": "Obtiene los detalles de un cliente específico",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Detalles del cliente",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CustomerResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Cliente no encontrado"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        },
+        "put": {
+          "tags": ["Customers"],
+          "summary": "Actualizar cliente",
+          "description": "Actualiza los datos de un cliente existente",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Cliente actualizado",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CustomerResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Cliente no encontrado"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        },
+        "delete": {
+          "tags": ["Customers"],
+          "summary": "Eliminar cliente",
+          "description": "Elimina un cliente del sistema",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Cliente eliminado"
+            },
+            "404": {
+              "description": "Cliente no encontrado"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/air-waybills": {
+        "get": {
+          "tags": ["Air Waybills"],
+          "summary": "Listar Air Waybills (paginado)",
+          "description": "Obtiene un listado paginado de guías aéreas del tenant",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Número de página (0-based)",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "description": "Tamaño de página",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "description": "Campo de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "default": "createdAt"
+              }
+            },
+            {
+              "name": "sortDir",
+              "in": "query",
+              "description": "Dirección de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "default": "desc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Listado de Air Waybills",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PageResponse"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/AirWaybillResponse"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        },
+        "post": {
+          "tags": ["Air Waybills"],
+          "summary": "Crear Air Waybill",
+          "description": "Crea una nueva guía aérea en el sistema",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AirWaybillRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Air Waybill creada",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AirWaybillResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Datos inválidos"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/air-waybills/search": {
+        "get": {
+          "tags": ["Air Waybills"],
+          "summary": "Buscar Air Waybills",
+          "description": "Busca guías aéreas por término de búsqueda",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "search",
+              "in": "query",
+              "description": "Término de búsqueda",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Número de página (0-based)",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "description": "Tamaño de página",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "description": "Campo de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "default": "createdAt"
+              }
+            },
+            {
+              "name": "sortDir",
+              "in": "query",
+              "description": "Dirección de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "default": "desc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Resultados de búsqueda",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PageResponse"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/AirWaybillResponse"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/air-waybills/status/{status}": {
+        "get": {
+          "tags": ["Air Waybills"],
+          "summary": "Filtrar Air Waybills por estado",
+          "description": "Obtiene guías aéreas filtradas por estado",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "status",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "enum": ["PRE_ALERT", "AWB_REGISTERED", "MANIFEST_DECONSOLIDATED", "CUSTOMS_PRESENTED", "CUSTOMS_CLEARED", "DELIVERED", "CANCELLED"]
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Número de página (0-based)",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "description": "Tamaño de página",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "description": "Campo de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "default": "createdAt"
+              }
+            },
+            {
+              "name": "sortDir",
+              "in": "query",
+              "description": "Dirección de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "default": "desc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Air Waybills filtradas por estado",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PageResponse"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/AirWaybillResponse"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/air-waybills/customer/{customerId}": {
+        "get": {
+          "tags": ["Air Waybills"],
+          "summary": "Filtrar Air Waybills por cliente",
+          "description": "Obtiene guías aéreas de un cliente específico",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "customerId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Número de página (0-based)",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "description": "Tamaño de página",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "description": "Campo de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "default": "createdAt"
+              }
+            },
+            {
+              "name": "sortDir",
+              "in": "query",
+              "description": "Dirección de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "default": "desc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Air Waybills del cliente",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PageResponse"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/AirWaybillResponse"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/air-waybills/pending": {
+        "get": {
+          "tags": ["Air Waybills"],
+          "summary": "Obtener Air Waybills pendientes",
+          "description": "Obtiene guías aéreas con estados pendientes de procesamiento",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Air Waybills pendientes",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AirWaybillResponse"
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/air-waybills/{id}": {
+        "get": {
+          "tags": ["Air Waybills"],
+          "summary": "Obtener Air Waybill por ID",
+          "description": "Obtiene los detalles de una guía aérea específica",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Detalles de la Air Waybill",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AirWaybillResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Air Waybill no encontrada"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        },
+        "put": {
+          "tags": ["Air Waybills"],
+          "summary": "Actualizar Air Waybill",
+          "description": "Actualiza los datos de una guía aérea existente",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AirWaybillRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Air Waybill actualizada",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AirWaybillResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Air Waybill no encontrada"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        },
+        "delete": {
+          "tags": ["Air Waybills"],
+          "summary": "Eliminar Air Waybill",
+          "description": "Elimina una guía aérea del sistema",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Air Waybill eliminada"
+            },
+            "404": {
+              "description": "Air Waybill no encontrada"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/air-waybills/{id}/status": {
+        "put": {
+          "tags": ["Air Waybills"],
+          "summary": "Actualizar estado de Air Waybill",
+          "description": "Actualiza el estado de una guía aérea",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAirWaybillStatusRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Estado actualizado",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AirWaybillResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Air Waybill no encontrada"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/invoices": {
+        "get": {
+          "tags": ["Invoices"],
+          "summary": "Listar facturas (paginado)",
+          "description": "Obtiene un listado paginado de facturas del tenant",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Número de página (0-based)",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "description": "Tamaño de página",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "description": "Campo de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "default": "createdAt"
+              }
+            },
+            {
+              "name": "sortDir",
+              "in": "query",
+              "description": "Dirección de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "default": "desc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Listado de facturas",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PageResponse"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/InvoiceResponse"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        },
+        "post": {
+          "tags": ["Invoices"],
+          "summary": "Crear factura",
+          "description": "Crea una nueva factura en el sistema",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Factura creada",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/InvoiceResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Datos inválidos"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/invoices/status/{status}": {
+        "get": {
+          "tags": ["Invoices"],
+          "summary": "Filtrar facturas por estado",
+          "description": "Obtiene facturas filtradas por estado",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "status",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "enum": ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"]
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Número de página (0-based)",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "description": "Tamaño de página",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "description": "Campo de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "default": "createdAt"
+              }
+            },
+            {
+              "name": "sortDir",
+              "in": "query",
+              "description": "Dirección de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "default": "desc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Facturas filtradas por estado",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PageResponse"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/InvoiceResponse"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/invoices/customer/{customerId}": {
+        "get": {
+          "tags": ["Invoices"],
+          "summary": "Filtrar facturas por cliente",
+          "description": "Obtiene facturas de un cliente específico",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "customerId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Número de página (0-based)",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 0
+              }
+            },
+            {
+              "name": "size",
+              "in": "query",
+              "description": "Tamaño de página",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 10
+              }
+            },
+            {
+              "name": "sortBy",
+              "in": "query",
+              "description": "Campo de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "default": "createdAt"
+              }
+            },
+            {
+              "name": "sortDir",
+              "in": "query",
+              "description": "Dirección de ordenamiento",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "default": "desc"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Facturas del cliente",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/PageResponse"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/InvoiceResponse"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/api/invoices/{id}": {
+        "get": {
+          "tags": ["Invoices"],
+          "summary": "Obtener factura por ID",
+          "description": "Obtiene los detalles de una factura específica",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Detalles de la factura",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/InvoiceResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Factura no encontrada"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        },
+        "put": {
+          "tags": ["Invoices"],
+          "summary": "Actualizar factura",
+          "description": "Actualiza los datos de una factura existente",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Factura actualizada",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/InvoiceResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Factura no encontrada"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        },
+        "delete": {
+          "tags": ["Invoices"],
+          "summary": "Eliminar factura",
+          "description": "Elimina una factura del sistema",
+          "security": [
+            {
+              "Bearer Authentication": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Factura eliminada"
+            },
+            "404": {
+              "description": "Factura no encontrada"
+            },
+            "403": {
+              "description": "Sin permisos"
+            }
+          }
+        }
+      },
+      "/health": {
+        "get": {
+          "tags": ["Health"],
+          "summary": "Health check",
+          "description": "Verifica el estado del servicio",
+          "responses": {
+            "200": {
+              "description": "Servicio saludable",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "example": "UP"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "tags": [
+      {
+        "name": "Authentication",
+        "description": "Operaciones de autenticación y gestión de usuarios"
+      },
+      {
+        "name": "Customers",
+        "description": "Gestión de clientes"
+      },
+      {
+        "name": "Air Waybills",
+        "description": "Gestión de guías aéreas"
+      },
+      {
+        "name": "Invoices",
+        "description": "Gestión de facturación"
+      },
+      {
+        "name": "Health",
+        "description": "Monitoreo del sistema"
+      }
+    ]
+  }
+  
