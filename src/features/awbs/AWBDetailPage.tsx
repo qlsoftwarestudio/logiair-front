@@ -72,7 +72,7 @@ export default function AWBDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          {hasPermission("awbs.status") && (
+          {hasPermission("awbs.status") && (AWB_TRANSITIONS[awb.status as AWBStatus] || []).length > 0 && (
             <Button onClick={() => setShowStatusModal(true)} className="gradient-primary text-primary-foreground gap-2">
               <ChevronRight className="h-4 w-4" /> Avanzar estado
             </Button>
@@ -145,8 +145,7 @@ export default function AWBDetailPage() {
                 className="flex gap-4 pb-6 last:pb-0"
               >
                 <div className="flex flex-col items-center">
-                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                    isCurrent ? "border-primary bg-primary shadow-lg shadow-primary/30" :
+              <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
                     isCompleted ? "border-success bg-success" :
                     "border-border bg-secondary"
                   }`} />

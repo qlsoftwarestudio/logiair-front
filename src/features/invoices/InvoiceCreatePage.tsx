@@ -17,8 +17,7 @@ export default function InvoiceCreatePage() {
 
   const [form, setForm] = useState({
     customerId: "",
-    issueDate: new Date().toISOString().split("T")[0],
-    dueDate: "",
+    invoiceDate: new Date().toISOString().split("T")[0],
   });
   const [items, setItems] = useState<{ description: string; quantity: string; unitPrice: string; taxRate: string }[]>([
     { description: "", quantity: "1", unitPrice: "", taxRate: "21" },
@@ -46,17 +45,20 @@ export default function InvoiceCreatePage() {
     try {
       const invoiceItems = items
         .filter((item) => item.description && item.unitPrice)
-        .map((item) => ({
-          description: item.description,
-          quantity: parseInt(item.quantity) || 1,
-          unitPrice: parseFloat(item.unitPrice),
-          taxRate: parseFloat(item.taxRate) || 0,
-        }));
+        .map((item) => {
+          const qty = parseInt(item.quantity) || 1;
+          const price = parseFloat(item.unitPrice);
+          const tax = parseFloat(item.taxRate) || 0;
+          const amount = qty * price * (1 + tax / 100);
+          return {
+            serviceDescription: item.description,
+            amount: Math.round(amount * 100) / 100,
+          };
+        });
 
       await createInvoice({
         customerId: Number(form.customerId),
-        issueDate: form.issueDate,
-        dueDate: form.dueDate || undefined,
+        invoiceDate: form.invoiceDate,
         items: invoiceItems,
       });
       toast({ title: "Factura creada" });
@@ -81,7 +83,7 @@ export default function InvoiceCreatePage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="glass-card p-6 space-y-5">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Datos de factura</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Cliente *</Label>
               <Select value={form.customerId} onValueChange={(v) => setForm({ ...form, customerId: v })}>
@@ -91,11 +93,7 @@ export default function InvoiceCreatePage() {
             </div>
             <div className="space-y-2">
               <Label>Fecha emisión *</Label>
-              <Input type="date" value={form.issueDate} onChange={(e) => setForm({ ...form, issueDate: e.target.value })} className="bg-secondary border-border" required />
-            </div>
-            <div className="space-y-2">
-              <Label>Fecha vencimiento</Label>
-              <Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className="bg-secondary border-border" />
+              <Input type="date" value={form.invoiceDate} onChange={(e) => setForm({ ...form, invoiceDate: e.target.value })} className="bg-secondary border-border" required />
             </div>
           </div>
         </div>

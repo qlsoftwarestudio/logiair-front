@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { STATUS_COLORS, STATUS_LABELS } from "@/constants/awbStatuses";
 import { ROLE_LABELS } from "@/constants/roles";
-import { formatCurrency } from "@/utils/formatters";
+
 import { reportService, type DashboardResponse } from "@/services/reportService";
 
 export default function DashboardPage() {
@@ -34,7 +34,9 @@ export default function DashboardPage() {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando dashboard...</div>;
   }
 
-  const recentAWBs = dashboard.recentAirWaybills || [];
+  const byStatus = dashboard.airWaybillsByStatus || {};
+  const completedCount = (byStatus["INVOICED"] || 0) + (byStatus["PROCESS_COMPLETED"] || 0);
+  const pendingCount = (dashboard.totalAirWaybills ?? 0) - completedCount;
 
   return (
     <div className="space-y-6">
@@ -64,52 +66,38 @@ export default function DashboardPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Guías activas" value={dashboard.pendingAirWaybills} badge={`${dashboard.totalAirWaybills} total`} badgeVariant="info" delay={0} />
-        <StatCard title="Completadas" value={dashboard.totalAirWaybills - dashboard.pendingAirWaybills} badge={`${Math.round(((dashboard.totalAirWaybills - dashboard.pendingAirWaybills) / (dashboard.totalAirWaybills || 1)) * 100)}%`} badgeVariant="success" delay={0.05} />
-        <StatCard title="Clientes" value={dashboard.totalCustomers} delay={0.1} />
+        <StatCard title="Guías activas" value={pendingCount} badge={`${dashboard.totalAirWaybills ?? 0} total`} badgeVariant="info" delay={0} />
+        <StatCard title="Completadas" value={completedCount} badge={`${dashboard.totalAirWaybills ? Math.round((completedCount / dashboard.totalAirWaybills) * 100) : 0}%`} badgeVariant="success" delay={0.05} />
+        <StatCard title="Clientes" value={dashboard.totalCustomers ?? 0} delay={0.1} />
         {hasPermission("invoices.view") && (
           <StatCard title="Facturas" value={dashboard.totalInvoices} delay={0.15} />
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent AWBs */}
+        {/* AWBs by status */}
         <div className="lg:col-span-2 glass-card p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Últimas operaciones</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Guías por estado</h3>
             <Button variant="ghost" size="sm" onClick={() => navigate("/awbs")} className="text-primary gap-1">
               Ver todas <ArrowRight className="h-3 w-3" />
             </Button>
           </div>
           <div className="space-y-2">
-            {recentAWBs.slice(0, 6).map((awb: any) => {
-              const sc = STATUS_COLORS[awb.status] || { bg: "bg-muted", text: "text-muted-foreground" };
-              return (
-                <motion.div
-                  key={awb.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  onClick={() => navigate(`/awbs/${awb.id}`)}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${awb.operationType === "IMPORT" ? "bg-primary/10" : "bg-chart-4/10"}`}>
-                      <Plane className={`h-4 w-4 ${awb.operationType === "IMPORT" ? "text-primary" : "text-chart-4"}`} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-mono font-semibold text-foreground">{awb.awbNumber}</p>
-                      <p className="text-xs text-muted-foreground">{awb.customer?.companyName || "-"}</p>
-                    </div>
+            {Object.entries(byStatus).length > 0 ? (
+              Object.entries(byStatus).map(([status, count]) => {
+                const sc = STATUS_COLORS[status] || { bg: "bg-muted", text: "text-muted-foreground" };
+                return (
+                  <div key={status} className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors">
+                    <span className={`status-badge ${sc.bg} ${sc.text}`}>
+                      {STATUS_LABELS[status as keyof typeof STATUS_LABELS] || status}
+                    </span>
+                    <span className="text-sm font-semibold text-foreground">{count}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground font-mono">{awb.origin}→{awb.destination}</span>
-                    <span className={`status-badge ${sc.bg} ${sc.text}`}>{STATUS_LABELS[awb.status as keyof typeof STATUS_LABELS] || awb.status}</span>
-                  </div>
-                </motion.div>
-              );
-            })}
-            {recentAWBs.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No hay operaciones recientes</p>
+                );
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">No hay operaciones</p>
             )}
           </div>
         </div>
@@ -122,8 +110,8 @@ export default function DashboardPage() {
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-xs font-semibold text-foreground">{dashboard.pendingAirWaybills} guías pendientes</p>
-                  <p className="text-xs text-muted-foreground">De un total de {dashboard.totalAirWaybills}</p>
+                  <p className="text-xs font-semibold text-foreground">{pendingCount} guías en proceso</p>
+                  <p className="text-xs text-muted-foreground">De un total de {dashboard.totalAirWaybills ?? 0}</p>
                 </div>
               </div>
             </div>

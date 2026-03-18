@@ -140,7 +140,7 @@ export default function InvoiceListPage() {
                 <tr className="border-b border-border">
                   <SortableHeader label="Factura" field="invoiceNumber" currentField={sortField} currentDir={sortDir} onSort={handleSort} />
                   <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cliente</th>
-                  <SortableHeader label="Fecha" field="issueDate" currentField={sortField} currentDir={sortDir} onSort={handleSort} />
+                  <SortableHeader label="Fecha" field="invoiceDate" currentField={sortField} currentDir={sortDir} onSort={handleSort} />
                   <SortableHeader label="Total" field="totalAmount" currentField={sortField} currentDir={sortDir} onSort={handleSort} className="text-right" />
                   <SortableHeader label="Estado" field="status" currentField={sortField} currentDir={sortDir} onSort={handleSort} />
                   <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-10"></th>
@@ -160,7 +160,7 @@ export default function InvoiceListPage() {
                     >
                       <td className="p-4 font-mono font-semibold text-foreground">{inv.invoiceNumber}</td>
                       <td className="p-4 text-sm text-foreground">{inv.customer?.companyName || "-"}</td>
-                      <td className="p-4 text-sm text-muted-foreground">{inv.issueDate}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{inv.invoiceDate}</td>
                       <td className="p-4 text-right font-semibold text-foreground">{formatCurrency(inv.totalAmount)}</td>
                       <td className="p-4"><span className={`status-badge ${ss.bg} ${ss.text}`}>{ss.label}</span></td>
                       <td className="p-4">

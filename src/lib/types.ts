@@ -52,10 +52,19 @@ export interface AirWaybill {
 }
 
 export interface InvoiceItem {
+  serviceDescription: string;
+  amount: number;
+  agencyCommission?: number;
+  airWaybillId?: number;
+}
+
+/** Frontend-only shape used in create/edit forms */
+export interface InvoiceItemFormData {
   description: string;
   quantity: number;
   unitPrice: number;
   taxRate?: number;
+  airWaybillId?: number;
 }
 
 export type InvoiceStatus = "DRAFT" | "SENT" | "PAID" | "OVERDUE" | "CANCELLED";
@@ -64,8 +73,7 @@ export interface Invoice {
   id: number;
   invoiceNumber: string;
   customer: Customer;
-  issueDate: string;
-  dueDate?: string;
+  invoiceDate: string;
   totalAmount: number;
   status: InvoiceStatus;
   items: InvoiceItem[];

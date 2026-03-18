@@ -6,14 +6,20 @@ import { useEffect } from "react";
 import { formatCurrency } from "@/utils/formatters";
 
 const statusStyles: Record<string, string> = {
+  DRAFT: "bg-muted/50 text-muted-foreground",
+  SENT: "bg-info/15 text-info",
   PENDING: "bg-warning/15 text-warning",
   PAID: "bg-success/15 text-success",
+  OVERDUE: "bg-warning/15 text-warning",
   CANCELLED: "bg-destructive/15 text-destructive",
 };
 
 const statusLabels: Record<string, string> = {
+  DRAFT: "Borrador",
+  SENT: "Enviada",
   PENDING: "Pendiente",
   PAID: "Pagada",
+  OVERDUE: "Vencida",
   CANCELLED: "Anulada",
 };
 
@@ -57,7 +63,7 @@ const FacturacionPage = () => {
                   {inv.invoiceNumber}
                 </td>
                 <td className="p-4 text-muted-foreground">{inv.customer?.companyName || "-"}</td>
-                <td className="p-4 text-muted-foreground">{inv.issueDate}</td>
+                <td className="p-4 text-muted-foreground">{inv.invoiceDate}</td>
                 <td className="p-4 font-semibold text-foreground">{formatCurrency(inv.totalAmount)}</td>
                 <td className="p-4">
                   <span className={`status-badge ${statusStyles[inv.status] || ""}`}>{statusLabels[inv.status] || inv.status}</span>

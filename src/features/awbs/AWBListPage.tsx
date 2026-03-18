@@ -128,8 +128,8 @@ export default function AWBListPage() {
                         <td className="p-4"><span className="font-mono font-semibold text-foreground">{awb.awbNumber}</span></td>
                         <td className="p-4 text-sm text-foreground">{awb.customer?.companyName || "-"}</td>
                         <td className="p-4">
-                          <span className={`text-xs font-bold px-2 py-1 rounded ${awb.operationType === "IMPORT" ? "bg-primary/15 text-primary" : "bg-chart-4/15 text-chart-4"}`}>
-                            {awb.operationType === "IMPORT" ? "IMP" : "EXP"}
+                          <span className={`text-xs font-bold px-2 py-1 rounded ${awb.operationType?.toUpperCase() === "IMPORT" ? "bg-primary/15 text-primary" : "bg-chart-4/15 text-chart-4"}`}>
+                            {awb.operationType?.toUpperCase() === "IMPORT" ? "IMPO" : "EXPO"}
                           </span>
                         </td>
                         <td className="p-4 text-sm font-mono text-muted-foreground">{awb.origin} → {awb.destination}</td>

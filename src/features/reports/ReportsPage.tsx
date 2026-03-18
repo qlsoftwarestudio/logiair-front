@@ -48,9 +48,9 @@ export default function ReportsPage() {
           }
           break;
         case "operations":
-          const ops = await reportService.getOperations(dateParams);
+          { const ops = await reportService.getOperations(dateParams);
           setOperationsData(ops);
-          break;
+          break; }
         case "customers":
           if (!customersData) {
             const cust = await reportService.getCustomerReport();
@@ -58,13 +58,13 @@ export default function ReportsPage() {
           }
           break;
         case "financial":
-          const inv = await reportService.getInvoicingReport(dateParams);
+          { const inv = await reportService.getInvoicingReport(dateParams);
           setInvoicingData(inv);
-          break;
+          break; }
         case "commissions":
-          const comm = await reportService.getCommissions(dateParams);
+          { const comm = await reportService.getCommissions(dateParams);
           setCommissionsData(comm);
-          break;
+          break; }
       }
     } catch (err: any) {
       console.error("Report load error:", err);
@@ -164,10 +164,10 @@ export default function ReportsPage() {
       {!loading && activeTab === "general" && dashboardData && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="Total operaciones" value={dashboardData.totalAirWaybills} delay={0} />
-            <StatCard title="Pendientes" value={dashboardData.pendingAirWaybills} badgeVariant="warning" delay={0.05} />
-            <StatCard title="Clientes" value={dashboardData.totalCustomers} delay={0.1} />
-            <StatCard title="Facturas" value={dashboardData.totalInvoices} delay={0.15} />
+            <StatCard title="Total operaciones" value={dashboardData.totalAirWaybills ?? 0} delay={0} />
+            <StatCard title="Pendientes" value={dashboardData.pendingAirWaybills ?? 0} badgeVariant="warning" delay={0.05} />
+            <StatCard title="Clientes" value={dashboardData.totalCustomers ?? 0} delay={0.1} />
+            <StatCard title="Facturas" value={dashboardData.totalInvoices ?? 0} delay={0.15} />
           </div>
           {dashboardData.chartData && dashboardData.chartData.length > 0 && (
             <div className="glass-card p-6">

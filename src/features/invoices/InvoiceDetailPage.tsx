@@ -90,7 +90,7 @@ export default function InvoiceDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground font-mono">{invoice.invoiceNumber}</h1>
-            <p className="text-sm text-muted-foreground">{invoice.customer?.companyName} · {invoice.issueDate}</p>
+            <p className="text-sm text-muted-foreground">{invoice.customer?.companyName} · {invoice.invoiceDate}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -135,8 +135,8 @@ export default function InvoiceDetailPage() {
           <span className={`status-badge text-sm mt-2 inline-block ${ss.bg} ${ss.text}`}>{ss.label}</span>
         </div>
         <div className="glass-card p-5">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Vencimiento</p>
-          <p className="text-lg font-semibold text-foreground mt-1">{invoice.dueDate || "—"}</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Creación</p>
+          <p className="text-lg font-semibold text-foreground mt-1">{invoice.createdAt?.split("T")[0] || "—"}</p>
         </div>
       </div>
 
@@ -146,27 +146,20 @@ export default function InvoiceDetailPage() {
           <thead>
             <tr className="border-b border-border">
               <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">Descripción</th>
-              <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase">Cant.</th>
-              <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Precio unit.</th>
-              <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">IVA %</th>
-              <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Subtotal</th>
+              <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Monto</th>
+              <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Comisión</th>
             </tr>
           </thead>
           <tbody>
-            {(invoice.items || []).map((item, idx) => {
-              const subtotal = item.quantity * item.unitPrice;
-              return (
-                <tr key={idx} className="border-b border-border/30">
-                  <td className="p-3 text-sm text-foreground">{item.description}</td>
-                  <td className="p-3 text-sm text-center text-muted-foreground">{item.quantity}</td>
-                  <td className="p-3 text-sm text-right text-muted-foreground">{formatCurrency(item.unitPrice)}</td>
-                  <td className="p-3 text-sm text-right text-muted-foreground">{item.taxRate ?? 0}%</td>
-                  <td className="p-3 text-sm text-right font-semibold text-foreground">{formatCurrency(subtotal)}</td>
-                </tr>
-              );
-            })}
+            {(invoice.items || []).map((item, idx) => (
+              <tr key={idx} className="border-b border-border/30">
+                <td className="p-3 text-sm text-foreground">{item.serviceDescription}</td>
+                <td className="p-3 text-sm text-right font-semibold text-foreground">{formatCurrency(item.amount)}</td>
+                <td className="p-3 text-sm text-right text-muted-foreground">{item.agencyCommission != null ? formatCurrency(item.agencyCommission) : "—"}</td>
+              </tr>
+            ))}
             <tr>
-              <td colSpan={4} className="p-3 text-sm font-semibold text-foreground text-right">Total</td>
+              <td colSpan={2} className="p-3 text-sm font-semibold text-foreground text-right">Total</td>
               <td className="p-3 text-right font-bold text-lg text-foreground">{formatCurrency(invoice.totalAmount)}</td>
             </tr>
           </tbody>

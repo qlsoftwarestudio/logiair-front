@@ -6,7 +6,7 @@ describe("reportService", () => {
   beforeEach(() => resetApiMocks());
 
   it("getDashboard calls dashboard endpoint", async () => {
-    const data = { totalAirWaybills: 10, pendingAirWaybills: 2, totalCustomers: 5, totalInvoices: 3 };
+    const data = { totalAirWaybills: 10, totalCustomers: 5, totalInvoices: 3, pendingInvoices: 0, paidInvoices: 0, totalInvoicedAmount: 0, pendingInvoicedAmount: 0, airWaybillsByStatus: { INVOICED: 3 }, recentOperations: {}, monthlyInvoicing: {} };
     mockGetSuccess(data);
     const result = await reportService.getDashboard();
     expect(mockApi.get).toHaveBeenCalledWith("/api/reports/dashboard");

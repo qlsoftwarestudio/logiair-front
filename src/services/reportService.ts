@@ -2,12 +2,16 @@ import api from "./api";
 import { API_URLS } from "@/constants/apiUrls";
 
 export interface DashboardResponse {
-  totalAirWaybills: number;
-  pendingAirWaybills: number;
   totalCustomers: number;
+  totalAirWaybills: number;
   totalInvoices: number;
-  recentAirWaybills: any[];
-  chartData: Array<{ date: string; imports: number; exports: number }>;
+  pendingInvoices: number;
+  paidInvoices: number;
+  totalInvoicedAmount: number;
+  pendingInvoicedAmount: number;
+  airWaybillsByStatus: Record<string, number>;
+  recentOperations: Record<string, number>;
+  monthlyInvoicing: Record<string, number>;
 }
 
 interface DateRangeParams {

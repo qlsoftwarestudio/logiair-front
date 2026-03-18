@@ -36,17 +36,13 @@ export function AWBTimeline({ awb, onAdvanceStatus }: AWBTimelineProps) {
             <div className="flex flex-col items-center w-8">
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  isCompleted
+                  isCompleted || isCurrent
                     ? "bg-success"
-                    : isCurrent
-                    ? "gradient-primary ring-2 ring-primary/30"
                     : "bg-secondary border border-border"
                 }`}
               >
-                {isCompleted ? (
+                {isCompleted || isCurrent ? (
                   <Check className="h-3.5 w-3.5 text-success-foreground" />
-                ) : isCurrent ? (
-                  <Clock className="h-3.5 w-3.5 text-primary-foreground" />
                 ) : (
                   <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
                 )}
