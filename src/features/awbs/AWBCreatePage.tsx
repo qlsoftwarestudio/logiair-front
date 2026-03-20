@@ -21,7 +21,7 @@ export default function AWBCreatePage() {
   const [form, setForm] = useState({
     awbNumber: "",
     customerId: "",
-    operationType: "IMPORT" as OperationType,
+    operationType: "IMPO" as OperationType,
     airline: "",
     origin: "",
     destination: "",
@@ -83,8 +83,8 @@ export default function AWBCreatePage() {
               <Select value={form.operationType} onValueChange={(v) => set("operationType", v)}>
                 <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="IMPORT">Importación</SelectItem>
-                  <SelectItem value="EXPORT">Exportación</SelectItem>
+                  <SelectItem value="IMPO">Importación</SelectItem>
+                  <SelectItem value="EXPO">Exportación</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -116,7 +116,7 @@ export default function AWBCreatePage() {
               <Input value={form.destination} onChange={(e) => set("destination", e.target.value.toUpperCase())} placeholder="MIA" maxLength={3} className="bg-secondary border-border font-mono" required />
             </div>
             <div className="space-y-2">
-              <Label>{form.operationType === "IMPORT" ? "Fecha de llegada" : "Fecha de salida"}</Label>
+              <Label>{form.operationType === "IMPO" ? "Fecha de llegada" : "Fecha de salida"}</Label>
               <Input type="date" value={form.arrivalOrDepartureDate} onChange={(e) => set("arrivalOrDepartureDate", e.target.value)} className="bg-secondary border-border" />
             </div>
             <div className="space-y-2">

@@ -113,10 +113,8 @@ export default function InvoiceListPage() {
           <SelectTrigger className="w-40 bg-secondary border-border"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="DRAFT">Borrador</SelectItem>
-            <SelectItem value="SENT">Enviada</SelectItem>
+            <SelectItem value="PENDING">Pendiente</SelectItem>
             <SelectItem value="PAID">Pagada</SelectItem>
-            <SelectItem value="OVERDUE">Vencida</SelectItem>
             <SelectItem value="CANCELLED">Anulada</SelectItem>
           </SelectContent>
         </Select>

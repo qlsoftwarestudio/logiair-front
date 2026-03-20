@@ -29,10 +29,10 @@ describe("invoiceService", () => {
     expect(mockApi.post).toHaveBeenCalledWith("/api/invoices", { totalAmount: 100 });
   });
 
-  it("updateStatus puts new status", async () => {
-    mockPutSuccess({ id: 1, status: "PAID" });
+  it("updateStatus patches new status", async () => {
+    mockApi.patch.mockResolvedValueOnce({ data: { id: 1, status: "PAID" } });
     await invoiceService.updateStatus(1, "PAID");
-    expect(mockApi.put).toHaveBeenCalledWith("/api/invoices/1", { status: "PAID" });
+    expect(mockApi.patch).toHaveBeenCalledWith("/api/invoices/1/status", { status: "PAID" });
   });
 
   it("deleteInvoice calls delete", async () => {

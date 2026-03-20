@@ -68,7 +68,7 @@ export default function AWBDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground font-mono">{awb.awbNumber}</h1>
-            <p className="text-sm text-muted-foreground">{awb.customer?.companyName} · {awb.operationType === "IMPORT" ? "Importación" : "Exportación"}</p>
+            <p className="text-sm text-muted-foreground">{awb.customer?.companyName} · {awb.operationType === "IMPO" ? "Importación" : "Exportación"}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -113,7 +113,7 @@ export default function AWBDetailPage() {
             {awb.arrivalOrDepartureDate && (
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="h-3 w-3 text-muted-foreground" />
-                <span className="text-foreground">{awb.operationType === "IMPORT" ? "Llegada" : "Salida"}: {awb.arrivalOrDepartureDate}</span>
+                <span className="text-foreground">{awb.operationType === "IMPO" ? "Llegada" : "Salida"}: {awb.arrivalOrDepartureDate}</span>
               </div>
             )}
             {awb.manifestNumber && <div className="flex items-center gap-2 text-sm"><FileText className="h-3 w-3 text-muted-foreground" /><span className="text-foreground font-mono">{awb.manifestNumber}</span></div>}

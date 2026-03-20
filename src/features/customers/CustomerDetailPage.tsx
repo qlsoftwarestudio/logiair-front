@@ -109,8 +109,8 @@ export default function CustomerDetailPage() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-mono font-semibold text-sm text-foreground">{awb.awbNumber}</span>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${awb.operationType === "IMPORT" ? "bg-primary/15 text-primary" : "bg-chart-4/15 text-chart-4"}`}>
-                      {awb.operationType === "IMPORT" ? "IMP" : "EXP"}
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${awb.operationType === "IMPO" ? "bg-primary/15 text-primary" : "bg-chart-4/15 text-chart-4"}`}>
+                      {awb.operationType === "IMPO" ? "IMP" : "EXP"}
                     </span>
                   </div>
                   <span className={`status-badge ${sc.bg} ${sc.text}`}>{STATUS_LABELS[awb.status as keyof typeof STATUS_LABELS] || awb.status}</span>

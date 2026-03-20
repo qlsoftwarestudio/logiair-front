@@ -5,7 +5,7 @@ interface OpTypeBadgeProps {
 }
 
 export function OpTypeBadge({ type }: OpTypeBadgeProps) {
-  const isImport = type === "IMPORT";
+  const isImport = type === "IMPO";
   return (
     <span
       className={`status-badge ${

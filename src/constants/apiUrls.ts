@@ -27,6 +27,7 @@ export const API_URLS = {
   INVOICES: {
     BASE: "/api/invoices",
     BY_ID: (id: number | string) => `/api/invoices/${id}`,
+    STATUS: (id: number | string) => `/api/invoices/${id}/status`,
     BY_STATUS: (status: string) => `/api/invoices/status/${status}`,
     BY_CUSTOMER: (customerId: number | string) => `/api/invoices/customer/${customerId}`,
     BY_CUSTOMER_MONTHLY: (customerId: number | string) => `/api/invoices/customer/${customerId}/monthly`,

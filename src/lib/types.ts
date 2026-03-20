@@ -9,7 +9,7 @@ export interface User {
   avatar?: string;
 }
 
-export type OperationType = "IMPORT" | "EXPORT";
+export type OperationType = "IMPO" | "EXPO";
 
 export type AWBStatus =
   | "PRE_ALERT"
@@ -67,13 +67,14 @@ export interface InvoiceItemFormData {
   airWaybillId?: number;
 }
 
-export type InvoiceStatus = "DRAFT" | "SENT" | "PAID" | "OVERDUE" | "CANCELLED";
+export type InvoiceStatus = "PENDING" | "PAID" | "CANCELLED";
 
 export interface Invoice {
   id: number;
   invoiceNumber: string;
   customer: Customer;
   invoiceDate: string;
+  
   totalAmount: number;
   status: InvoiceStatus;
   items: InvoiceItem[];

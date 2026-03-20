@@ -51,8 +51,8 @@ const OperacionesPage = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Todas</SelectItem>
-            <SelectItem value="IMPORT">Importación</SelectItem>
-            <SelectItem value="EXPORT">Exportación</SelectItem>
+            <SelectItem value="IMPO">Importación</SelectItem>
+            <SelectItem value="EXPO">Exportación</SelectItem>
           </SelectContent>
         </Select>
       </div>

@@ -12,10 +12,8 @@ import { AppBreadcrumb } from "@/components/molecules/AppBreadcrumb";
 import type { InvoiceStatus } from "@/lib/types";
 
 const statusStyle: Record<string, { bg: string; text: string; label: string }> = {
-  DRAFT: { bg: "bg-muted/50", text: "text-muted-foreground", label: "Borrador" },
-  SENT: { bg: "bg-info/15", text: "text-info", label: "Enviada" },
+  PENDING: { bg: "bg-warning/15", text: "text-warning", label: "Pendiente" },
   PAID: { bg: "bg-success/15", text: "text-success", label: "Pagada" },
-  OVERDUE: { bg: "bg-warning/15", text: "text-warning", label: "Vencida" },
   CANCELLED: { bg: "bg-destructive/15", text: "text-destructive", label: "Anulada" },
 };
 
@@ -55,10 +53,10 @@ export default function InvoiceDetailPage() {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando...</div>;
   }
 
-  const ss = statusStyle[invoice.status] || statusStyle.DRAFT;
-  const canEdit = invoice.status === "DRAFT";
-  const canMarkPaid = invoice.status === "SENT" || invoice.status === "OVERDUE";
-  const canSend = invoice.status === "DRAFT";
+  const ss = statusStyle[invoice.status] || statusStyle.PENDING;
+  const canEdit = invoice.status === "PENDING";
+  const canMarkPaid = invoice.status === "PENDING";
+  const canMarkPending = invoice.status === "PAID";
   const canCancel = invoice.status !== "CANCELLED" && invoice.status !== "PAID";
 
   const handleStatusChange = async (status: InvoiceStatus) => {
@@ -99,14 +97,14 @@ export default function InvoiceDetailPage() {
               <Edit className="h-4 w-4" /> Editar
             </Button>
           )}
-          {hasPermission("invoices.edit") && canSend && (
-            <Button onClick={() => handleStatusChange("SENT")} variant="outline" className="text-info gap-2">
-              <Send className="h-4 w-4" /> Enviar
-            </Button>
-          )}
           {hasPermission("invoices.edit") && canMarkPaid && (
             <Button onClick={() => handleStatusChange("PAID")} variant="outline" className="text-success gap-2">
               <CheckCircle className="h-4 w-4" /> Marcar pagada
+            </Button>
+          )}
+          {hasPermission("invoices.edit") && canMarkPending && (
+            <Button onClick={() => handleStatusChange("PENDING")} variant="outline" className="text-warning gap-2">
+              <XCircle className="h-4 w-4" /> Marcar pendiente
             </Button>
           )}
           {hasPermission("invoices.edit") && canCancel && (

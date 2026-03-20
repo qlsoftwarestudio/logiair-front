@@ -46,7 +46,7 @@ export const invoiceService = {
   },
 
   updateStatus: async (id: number | string, status: InvoiceStatus): Promise<Invoice> => {
-    const response = await api.put(API_URLS.INVOICES.BY_ID(id), { status });
+    const response = await api.patch(API_URLS.INVOICES.STATUS(id), { status });
     return response.data;
   },
 
