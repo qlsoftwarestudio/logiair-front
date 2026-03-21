@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useInvoiceStore } from "@/stores/invoiceStore";
 import { useAuthStore } from "@/stores/authStore";
-import { ArrowLeft, Edit, Trash2, CheckCircle, XCircle, Send, Download } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, CheckCircle, XCircle, Send, Download, FileSpreadsheet } from "lucide-react";
 import { invoiceService } from "@/services/invoiceService";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -24,23 +24,24 @@ export default function InvoiceDetailPage() {
   const { hasPermission } = useAuthStore();
   const { toast } = useToast();
   const [showDelete, setShowDelete] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [downloading, setDownloading] = useState<"pdf" | "excel" | null>(null);
 
-  const handleDownloadPDF = async () => {
+  const handleDownload = async (format: "pdf" | "excel") => {
     if (!invoice) return;
-    setDownloading(true);
+    setDownloading(format);
     try {
-      const blob = await invoiceService.exportPDF(invoice.id);
+      const blob = await invoiceService.exportInvoice(invoice.id, format);
+      const ext = format === "pdf" ? "pdf" : "xlsx";
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${invoice.invoiceNumber}.pdf`;
+      a.download = `${invoice.invoiceNumber}.${ext}`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      toast({ title: "Error al descargar PDF", description: err.message, variant: "destructive" });
+      toast({ title: `Error al descargar ${format.toUpperCase()}`, description: err.response?.data?.message || err.message, variant: "destructive" });
     } finally {
-      setDownloading(false);
+      setDownloading(null);
     }
   };
 
@@ -112,8 +113,11 @@ export default function InvoiceDetailPage() {
               <XCircle className="h-4 w-4" /> Anular
             </Button>
           )}
-          <Button variant="outline" className="gap-2" onClick={handleDownloadPDF} disabled={downloading}>
-            <Download className="h-4 w-4" /> {downloading ? "Descargando..." : "PDF"}
+          <Button variant="outline" className="gap-2" onClick={() => handleDownload("pdf")} disabled={!!downloading}>
+            <Download className="h-4 w-4" /> {downloading === "pdf" ? "Descargando..." : "PDF"}
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => handleDownload("excel")} disabled={!!downloading}>
+            <FileSpreadsheet className="h-4 w-4" /> {downloading === "excel" ? "Descargando..." : "Excel"}
           </Button>
           {hasPermission("invoices.delete") && (
             <Button variant="outline" className="text-destructive" onClick={() => setShowDelete(true)}>
@@ -145,20 +149,21 @@ export default function InvoiceDetailPage() {
             <tr className="border-b border-border">
               <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">Descripción</th>
               <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Monto</th>
-              <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Comisión</th>
+              <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">Guía</th>
             </tr>
           </thead>
           <tbody>
             {(invoice.items || []).map((item, idx) => (
               <tr key={idx} className="border-b border-border/30">
                 <td className="p-3 text-sm text-foreground">{item.serviceDescription}</td>
-                <td className="p-3 text-sm text-right font-semibold text-foreground">{formatCurrency(item.amount)}</td>
-                <td className="p-3 text-sm text-right text-muted-foreground">{item.agencyCommission != null ? formatCurrency(item.agencyCommission) : "—"}</td>
+                <td className="p-3 text-sm text-right text-foreground">{formatCurrency(item.amount)}</td>
+                <td className="p-3 text-sm text-foreground">{item.airWaybill?.awbNumber || "—"}</td>
               </tr>
             ))}
             <tr>
-              <td colSpan={2} className="p-3 text-sm font-semibold text-foreground text-right">Total</td>
+              <td className="p-3 text-sm font-semibold text-foreground text-right" colSpan={1}>Total</td>
               <td className="p-3 text-right font-bold text-lg text-foreground">{formatCurrency(invoice.totalAmount)}</td>
+              <td />
             </tr>
           </tbody>
         </table>

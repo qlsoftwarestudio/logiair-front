@@ -72,7 +72,7 @@ export const useInvoiceStore = create<InvoiceState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const newInvoice = await invoiceService.createInvoice(data);
-      set((s) => ({ invoices: [newInvoice, ...s.invoices], loading: false }));
+      set((s) => ({ invoices: [newInvoice, ...s.invoices], currentInvoice: newInvoice, loading: false }));
       return newInvoice;
     } catch (err: any) {
       set({ error: err.response?.data?.message || err.message, loading: false });

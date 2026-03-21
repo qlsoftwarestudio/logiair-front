@@ -57,7 +57,29 @@ describe("invoiceService", () => {
     });
   });
 
-  it("exportPDF fetches blob", async () => {
+  it("exportInvoice fetches PDF blob", async () => {
+    const blob = new Blob(["pdf"]);
+    mockGetSuccess(blob);
+    const result = await invoiceService.exportInvoice(1, "pdf");
+    expect(mockApi.get).toHaveBeenCalledWith("/api/invoices/export/1", {
+      params: { format: "pdf" },
+      responseType: "blob",
+    });
+    expect(result).toBe(blob);
+  });
+
+  it("exportInvoice fetches Excel blob", async () => {
+    const blob = new Blob(["excel"]);
+    mockGetSuccess(blob);
+    const result = await invoiceService.exportInvoice(1, "excel");
+    expect(mockApi.get).toHaveBeenCalledWith("/api/invoices/export/1", {
+      params: { format: "excel" },
+      responseType: "blob",
+    });
+    expect(result).toBe(blob);
+  });
+
+  it("exportPDF delegates to exportInvoice", async () => {
     const blob = new Blob(["pdf"]);
     mockGetSuccess(blob);
     const result = await invoiceService.exportPDF(1);

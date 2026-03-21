@@ -52,7 +52,7 @@ export default function InvoiceListPage() {
   const handleDownloadPDF = async (e: React.MouseEvent, invoiceId: number) => {
     e.stopPropagation();
     try {
-      const blob = await invoiceService.exportPDF(invoiceId);
+      const blob = await invoiceService.exportInvoice(invoiceId, "pdf");
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -60,7 +60,7 @@ export default function InvoiceListPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: err.response?.data?.message || err.message, variant: "destructive" });
     }
   };
 

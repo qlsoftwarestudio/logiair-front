@@ -68,11 +68,16 @@ export const invoiceService = {
     return response.data;
   },
 
-  exportPDF: async (id: number | string): Promise<Blob> => {
+  exportInvoice: async (id: number | string, format: "pdf" | "excel" = "pdf"): Promise<Blob> => {
     const response = await api.get(API_URLS.INVOICES.EXPORT(id), {
-      params: { format: "pdf" },
+      params: { format },
       responseType: "blob",
     });
     return response.data;
+  },
+
+  /** @deprecated Usar exportInvoice(id, "pdf") */
+  exportPDF: async (id: number | string): Promise<Blob> => {
+    return invoiceService.exportInvoice(id, "pdf");
   },
 };

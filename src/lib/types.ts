@@ -52,19 +52,11 @@ export interface AirWaybill {
 }
 
 export interface InvoiceItem {
+  id?: number;
   serviceDescription: string;
   amount: number;
-  agencyCommission?: number;
-  airWaybillId?: number;
-}
-
-/** Frontend-only shape used in create/edit forms */
-export interface InvoiceItemFormData {
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  taxRate?: number;
-  airWaybillId?: number;
+  airWaybillId?: number | null;
+  airWaybill?: { id: number; awbNumber: string };
 }
 
 export type InvoiceStatus = "PENDING" | "PAID" | "CANCELLED";

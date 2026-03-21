@@ -21,7 +21,7 @@ export default function InvoiceEditPage() {
   const { awbs, fetchAWBs } = useAWBStore();
 
   const [form, setForm] = useState({ invoiceNumber: "", customerId: "", invoiceDate: "", status: "PENDING" as "PENDING" | "PAID", observations: "" });
-  const [items, setItems] = useState<{ description: string; quantity: string; unitPrice: string; taxRate: string; agencyCommission: string; airWaybillId: string }[]>([]);
+  const [items, setItems] = useState<{ serviceDescription: string; amount: string; airWaybillId: string }[]>([]);
 
   useEffect(() => {
     fetchCustomers();
@@ -39,24 +39,17 @@ export default function InvoiceEditPage() {
         status: (currentInvoice.status as "PENDING" | "PAID") || "PENDING",
         observations: (currentInvoice as any).observations || "",
       });
-      setItems((currentInvoice.items || []).map((item) => ({
-        description: item.serviceDescription || "",
-        quantity: "1",
-        unitPrice: String(item.amount || 0),
-        taxRate: "0",
-        agencyCommission: String(item.agencyCommission || ""),
+      setItems((currentInvoice.items || []).map((item: any) => ({
+        serviceDescription: item.serviceDescription || "",
+        amount: String(item.amount ?? 0),
         airWaybillId: item.airWaybillId ? String(item.airWaybillId) : "none",
       })));
     }
   }, [currentInvoice]);
 
-  const total = items.reduce((s, item) => {
-    const subtotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
-    const tax = subtotal * ((parseFloat(item.taxRate) || 0) / 100);
-    return s + subtotal + tax;
-  }, 0);
+  const total = items.reduce((s, item) => s + (parseFloat(item.amount) || 0), 0);
 
-  const addItem = () => setItems([...items, { description: "", quantity: "1", unitPrice: "", taxRate: "21", agencyCommission: "", airWaybillId: "none" }]);
+  const addItem = () => setItems([...items, { serviceDescription: "", amount: "", airWaybillId: "none" }]);
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
   const updateSvc = (i: number, field: string, value: string) => {
     const updated = [...items];
@@ -69,19 +62,12 @@ export default function InvoiceEditPage() {
     if (!id || !form.customerId) return;
     try {
       const invoiceItems = items
-        .filter((item) => item.description && item.unitPrice)
-        .map((item) => {
-          const qty = parseInt(item.quantity) || 1;
-          const price = parseFloat(item.unitPrice);
-          const tax = parseFloat(item.taxRate) || 0;
-          const amount = qty * price * (1 + tax / 100);
-          return {
-            serviceDescription: item.description,
-            amount: Math.round(amount * 100) / 100,
-            agencyCommission: item.agencyCommission ? parseFloat(item.agencyCommission) : undefined,
-            airWaybillId: item.airWaybillId && item.airWaybillId !== "none" ? Number(item.airWaybillId) : undefined,
-          };
-        });
+        .filter((item) => item.serviceDescription && item.amount)
+        .map((item) => ({
+          serviceDescription: item.serviceDescription,
+          amount: parseFloat(item.amount),
+          airWaybillId: item.airWaybillId && item.airWaybillId !== "none" ? Number(item.airWaybillId) : null,
+        }));
 
       await updateInvoice(id, {
         invoiceNumber: form.invoiceNumber,
@@ -167,20 +153,12 @@ export default function InvoiceEditPage() {
             <div key={i} className="space-y-3 p-3 rounded-lg bg-secondary/30 border border-border/50">
               <div className="flex gap-3 items-end">
                 <div className="flex-1 space-y-1">
-                  <Label className="text-xs">Descripción</Label>
-                  <Input value={item.description} onChange={(e) => updateSvc(i, "description", e.target.value)} className="bg-secondary border-border" />
-                </div>
-                <div className="w-20 space-y-1">
-                  <Label className="text-xs">Cant.</Label>
-                  <Input type="number" value={item.quantity} onChange={(e) => updateSvc(i, "quantity", e.target.value)} className="bg-secondary border-border" />
+                  <Label className="text-xs">Descripción del servicio</Label>
+                  <Input value={item.serviceDescription} onChange={(e) => updateSvc(i, "serviceDescription", e.target.value)} className="bg-secondary border-border" />
                 </div>
                 <div className="w-28 space-y-1">
-                  <Label className="text-xs">Precio unit.</Label>
-                  <Input type="number" value={item.unitPrice} onChange={(e) => updateSvc(i, "unitPrice", e.target.value)} className="bg-secondary border-border" />
-                </div>
-                <div className="w-20 space-y-1">
-                  <Label className="text-xs">IVA %</Label>
-                  <Input type="number" value={item.taxRate} onChange={(e) => updateSvc(i, "taxRate", e.target.value)} className="bg-secondary border-border" />
+                  <Label className="text-xs">Monto</Label>
+                  <Input type="number" step="0.01" value={item.amount} onChange={(e) => updateSvc(i, "amount", e.target.value)} placeholder="0.00" className="bg-secondary border-border" />
                 </div>
                 {items.length > 1 && (
                   <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(i)} className="text-destructive">
@@ -189,10 +167,6 @@ export default function InvoiceEditPage() {
                 )}
               </div>
               <div className="flex gap-3 items-end">
-                <div className="w-32 space-y-1">
-                  <Label className="text-xs">Comisión agencia</Label>
-                  <Input type="number" value={item.agencyCommission} onChange={(e) => updateSvc(i, "agencyCommission", e.target.value)} placeholder="0" className="bg-secondary border-border" />
-                </div>
                 <div className="flex-1 space-y-1">
                   <Label className="text-xs">Guía asociada</Label>
                   <Select value={item.airWaybillId} onValueChange={(v) => updateSvc(i, "airWaybillId", v)}>

@@ -25,19 +25,15 @@ export default function InvoiceCreatePage() {
     status: "PENDING" as "PENDING" | "PAID",
     observations: "",
   });
-  const [items, setItems] = useState<{ description: string; quantity: string; unitPrice: string; taxRate: string; agencyCommission: string; airWaybillId: string }[]>([
-    { description: "", quantity: "1", unitPrice: "", taxRate: "21", agencyCommission: "", airWaybillId: "none" },
+  const [items, setItems] = useState<{ serviceDescription: string; amount: string; airWaybillId: string }[]>([
+    { serviceDescription: "", amount: "", airWaybillId: "none" },
   ]);
 
   useEffect(() => { fetchCustomers(); fetchAWBs(); }, []);
 
-  const total = items.reduce((s, item) => {
-    const subtotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
-    const tax = subtotal * ((parseFloat(item.taxRate) || 0) / 100);
-    return s + subtotal + tax;
-  }, 0);
+  const total = items.reduce((s, item) => s + (parseFloat(item.amount) || 0), 0);
 
-  const addItem = () => setItems([...items, { description: "", quantity: "1", unitPrice: "", taxRate: "21", agencyCommission: "", airWaybillId: "none" }]);
+  const addItem = () => setItems([...items, { serviceDescription: "", amount: "", airWaybillId: "none" }]);
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
   const updateItem = (i: number, field: string, value: string) => {
     const updated = [...items];
@@ -50,21 +46,14 @@ export default function InvoiceCreatePage() {
     if (!form.customerId || !form.invoiceNumber) return;
     try {
       const invoiceItems = items
-        .filter((item) => item.description && item.unitPrice)
-        .map((item) => {
-          const qty = parseInt(item.quantity) || 1;
-          const price = parseFloat(item.unitPrice);
-          const tax = parseFloat(item.taxRate) || 0;
-          const amount = qty * price * (1 + tax / 100);
-          return {
-            serviceDescription: item.description,
-            amount: Math.round(amount * 100) / 100,
-            agencyCommission: item.agencyCommission ? parseFloat(item.agencyCommission) : undefined,
-            airWaybillId: item.airWaybillId && item.airWaybillId !== "none" ? Number(item.airWaybillId) : undefined,
-          };
-        });
+        .filter((item) => item.serviceDescription && item.amount)
+        .map((item) => ({
+          serviceDescription: item.serviceDescription,
+          amount: parseFloat(item.amount),
+          airWaybillId: item.airWaybillId && item.airWaybillId !== "none" ? Number(item.airWaybillId) : null,
+        }));
 
-      await createInvoice({
+      const newInvoice = await createInvoice({
         invoiceNumber: form.invoiceNumber,
         customerId: Number(form.customerId),
         invoiceDate: form.invoiceDate,
@@ -74,7 +63,7 @@ export default function InvoiceCreatePage() {
         items: invoiceItems,
       });
       toast({ title: "Factura creada" });
-      navigate("/invoices");
+      navigate(`/invoices/${newInvoice.id}`);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -144,20 +133,12 @@ export default function InvoiceCreatePage() {
             <div key={i} className="space-y-3 p-3 rounded-lg bg-secondary/30 border border-border/50">
               <div className="flex gap-3 items-end">
                 <div className="flex-1 space-y-1">
-                  <Label className="text-xs">Descripción</Label>
-                  <Input value={item.description} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Servicio..." className="bg-secondary border-border" />
-                </div>
-                <div className="w-20 space-y-1">
-                  <Label className="text-xs">Cant.</Label>
-                  <Input type="number" value={item.quantity} onChange={(e) => updateItem(i, "quantity", e.target.value)} className="bg-secondary border-border" />
+                  <Label className="text-xs">Descripción del servicio</Label>
+                  <Input value={item.serviceDescription} onChange={(e) => updateItem(i, "serviceDescription", e.target.value)} placeholder="Servicio..." className="bg-secondary border-border" />
                 </div>
                 <div className="w-28 space-y-1">
-                  <Label className="text-xs">Precio unit.</Label>
-                  <Input type="number" value={item.unitPrice} onChange={(e) => updateItem(i, "unitPrice", e.target.value)} placeholder="0" className="bg-secondary border-border" />
-                </div>
-                <div className="w-20 space-y-1">
-                  <Label className="text-xs">IVA %</Label>
-                  <Input type="number" value={item.taxRate} onChange={(e) => updateItem(i, "taxRate", e.target.value)} placeholder="21" className="bg-secondary border-border" />
+                  <Label className="text-xs">Monto</Label>
+                  <Input type="number" step="0.01" value={item.amount} onChange={(e) => updateItem(i, "amount", e.target.value)} placeholder="0.00" className="bg-secondary border-border" />
                 </div>
                 {items.length > 1 && (
                   <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(i)} className="text-destructive">
@@ -166,10 +147,6 @@ export default function InvoiceCreatePage() {
                 )}
               </div>
               <div className="flex gap-3 items-end">
-                <div className="w-32 space-y-1">
-                  <Label className="text-xs">Comisión agencia</Label>
-                  <Input type="number" value={item.agencyCommission} onChange={(e) => updateItem(i, "agencyCommission", e.target.value)} placeholder="0" className="bg-secondary border-border" />
-                </div>
                 <div className="flex-1 space-y-1">
                   <Label className="text-xs">Guía asociada</Label>
                   <Select value={item.airWaybillId} onValueChange={(v) => updateItem(i, "airWaybillId", v)}>
@@ -190,7 +167,7 @@ export default function InvoiceCreatePage() {
 
         <div className="flex gap-3 justify-end">
           <Button type="button" variant="outline" onClick={() => navigate("/invoices")}>Cancelar</Button>
-          <Button type="submit" disabled={loading || !form.customerId || !form.invoiceNumber} className="gradient-primary text-primary-foreground gap-2">
+          <Button type="submit" disabled={loading || !form.customerId || !form.invoiceNumber || items.every(i => !i.serviceDescription || !i.amount)} className="gradient-primary text-primary-foreground gap-2">
             <Save className="h-4 w-4" /> Crear factura
           </Button>
         </div>
