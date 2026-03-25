@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { motion } from "framer-motion";
 import { Plane, Users, Receipt, ArrowRight, AlertCircle, Plus, TrendingUp } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { STATUS_COLORS, STATUS_LABELS } from "@/constants/awbStatuses";
@@ -76,31 +77,84 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* AWBs by status */}
-        <div className="lg:col-span-2 glass-card p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="lg:col-span-2 glass-card p-6"
+        >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Guías por estado</h3>
             <Button variant="ghost" size="sm" onClick={() => navigate("/awbs")} className="text-primary gap-1">
               Ver todas <ArrowRight className="h-3 w-3" />
             </Button>
           </div>
-          <div className="space-y-2">
-            {Object.entries(byStatus).length > 0 ? (
-              Object.entries(byStatus).map(([status, count]) => {
-                const sc = STATUS_COLORS[status] || { bg: "bg-muted", text: "text-muted-foreground" };
-                return (
-                  <div key={status} className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors">
-                    <span className={`status-badge ${sc.bg} ${sc.text}`}>
-                      {STATUS_LABELS[status as keyof typeof STATUS_LABELS] || status}
-                    </span>
-                    <span className="text-sm font-semibold text-foreground">{count}</span>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">No hay operaciones</p>
-            )}
-          </div>
-        </div>
+          {(() => {
+            const CHART_COLORS: Record<string, string> = {
+              PRE_ALERT: "hsl(38, 92%, 50%)",
+              AWB_REGISTERED: "hsl(210, 100%, 50%)",
+              MANIFEST_DECONSOLIDATED: "hsl(280, 65%, 60%)",
+              CUSTOMS_PRESENTED: "hsl(340, 75%, 55%)",
+              CUSTOMS_CLEARED: "hsl(142, 71%, 45%)",
+              MANIFEST_REGISTERED: "hsl(200, 80%, 50%)",
+              PROCESS_COMPLETED: "hsl(25, 95%, 55%)",
+              INVOICED: "hsl(142, 71%, 35%)",
+            };
+            const chartData = Object.entries(byStatus).map(([status, count]) => ({
+              name: STATUS_LABELS[status as keyof typeof STATUS_LABELS] || status,
+              value: count as number,
+              status,
+            }));
+            if (chartData.length === 0) {
+              return <p className="text-sm text-muted-foreground text-center py-12">No hay operaciones</p>;
+            }
+            return (
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="w-full md:w-1/2 h-[260px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={100}
+                        paddingAngle={3}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {chartData.map((entry) => (
+                          <Cell key={entry.status} fill={CHART_COLORS[entry.status] || "hsl(220, 15%, 40%)"} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--popover))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                          color: "hsl(var(--popover-foreground))",
+                          fontSize: "12px",
+                        }}
+                        formatter={(value: number, name: string) => [`${value} guías`, name]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="w-full md:w-1/2 space-y-2">
+                  {chartData.map((entry) => (
+                    <div key={entry.status} className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-secondary/40 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: CHART_COLORS[entry.status] || "hsl(220, 15%, 40%)" }} />
+                        <span className="text-xs text-foreground">{entry.name}</span>
+                      </div>
+                      <span className="text-xs font-bold text-foreground">{entry.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+        </motion.div>
 
         {/* Quick actions */}
         <div className="space-y-4">
