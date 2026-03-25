@@ -4,6 +4,7 @@ import { useInvoiceStore } from "@/stores/invoiceStore";
 import { useAuthStore } from "@/stores/authStore";
 import { motion } from "framer-motion";
 import { Search, Plus, FileText, Download, CalendarDays } from "lucide-react";
+import { DateRangeExportDialog } from "@/components/invoices/DateRangeExportDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -91,11 +92,7 @@ export default function InvoiceListPage() {
           <p className="text-sm text-muted-foreground">{invoices.length} facturas · Pendiente: {formatCurrency(pendingBilling)}</p>
         </div>
         <div className="flex gap-2">
-          {hasPermission("invoices.create") && (
-            <Button onClick={handleGenerateMonthly} variant="outline" className="gap-2">
-              <CalendarDays className="h-4 w-4" /> Generar mensual
-            </Button>
-          )}
+          <DateRangeExportDialog />
           {hasPermission("invoices.create") && (
             <Button onClick={() => navigate("/invoices/new")} className="gradient-primary text-primary-foreground gap-2">
               <Plus className="h-4 w-4" /> Nueva Factura

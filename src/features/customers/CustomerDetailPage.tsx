@@ -5,6 +5,7 @@ import { useAWBStore } from "@/stores/awbStore";
 import { useAuthStore } from "@/stores/authStore";
 import { motion } from "framer-motion";
 import { ArrowLeft, Edit, Trash2, Building2, Mail, Phone, Users, Calendar } from "lucide-react";
+import { CustomerAIHub } from "@/components/customers/CustomerAIHub";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +15,7 @@ import { useState } from "react";
 export default function CustomerDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentCustomer: customer, loading, fetchCustomer, deleteCustomer, clearCurrent } = useCustomerStore();
+  const { currentCustomer: customer, loading, fetchCustomer, deleteCustomer, updateCustomer, clearCurrent } = useCustomerStore();
   const { awbs, fetchAWBs } = useAWBStore();
   const { hasPermission } = useAuthStore();
   const { toast } = useToast();
@@ -120,6 +121,13 @@ export default function CustomerDetailPage() {
           </div>
         )}
       </div>
+
+      {hasPermission("customers.edit") && (
+        <CustomerAIHub
+          customer={customer}
+          onUpdate={async (id, data) => { await updateCustomer(id, data); }}
+        />
+      )}
 
       <Dialog open={showDelete} onOpenChange={setShowDelete}>
         <DialogContent>

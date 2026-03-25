@@ -4,7 +4,7 @@ import { useCustomerStore } from "@/stores/customerStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useAWBStore } from "@/stores/awbStore";
 import { motion } from "framer-motion";
-import { Search, Plus, Building2, Mail, Phone, Users } from "lucide-react";
+import { Search, Plus, Building2, Mail, Phone, Users, Bot } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AppBreadcrumb } from "@/components/molecules/AppBreadcrumb";
@@ -90,6 +90,14 @@ export default function CustomerListPage() {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground"><Mail className="h-3 w-3" />{client.contactEmail}</div>
                   {client.contactPhone && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Phone className="h-3 w-3" />{client.contactPhone}</div>}
                 </div>
+                {(client.aiPreAlerts || client.aiPdfExtraction || client.aiAutoReports || client.aiBillingSuggestions) && (
+                  <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5">
+                    <Bot className="h-3 w-3 text-primary" />
+                    <span className="text-[10px] font-semibold text-primary">
+                      {[client.aiPreAlerts, client.aiPdfExtraction, client.aiAutoReports, client.aiBillingSuggestions].filter(Boolean).length} IA activas
+                    </span>
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>

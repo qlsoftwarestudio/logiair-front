@@ -3,7 +3,6 @@ import {
   Plane,
   Users,
   Receipt,
-  Bot,
   BarChart3,
   Settings,
 } from "lucide-react";
@@ -27,7 +26,6 @@ const mainNav = [
   { title: "Guías AWB", url: "/awbs", icon: Plane, permission: "awbs.view" },
   { title: "Clientes", url: "/customers", icon: Users, permission: "customers.view" },
   { title: "Facturación", url: "/invoices", icon: Receipt, permission: "invoices.view" },
-  { title: "IA Hub", url: "/ia-hub", icon: Bot, permission: "dashboard.view" },
   { title: "Reportes", url: "/reports", icon: BarChart3, permission: "reports.view" },
 ];
 
@@ -68,11 +66,6 @@ export function AppSidebar() {
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
                       {!collapsed && <span className="text-sm">{item.title}</span>}
-                      {!collapsed && item.title === "IA Hub" && (
-                        <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded gradient-success text-success-foreground font-bold">
-                          NEW
-                        </span>
-                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -76,6 +76,28 @@ export const invoiceService = {
     return response.data;
   },
 
+  exportDateRange: async (params: {
+    startDate: string;
+    endDate: string;
+    customerId?: number | string;
+    includeCharts?: boolean;
+    format?: "excel" | "pdf";
+  }): Promise<Blob> => {
+    const queryParams: Record<string, any> = {
+      startDate: params.startDate,
+      endDate: params.endDate,
+      format: params.format || "excel",
+    };
+    if (params.customerId) queryParams.customerId = params.customerId;
+    if (params.includeCharts) queryParams.includeCharts = params.includeCharts;
+
+    const response = await api.get(API_URLS.INVOICES.EXPORT_DATERANGE, {
+      params: queryParams,
+      responseType: "blob",
+    });
+    return response.data;
+  },
+
   /** @deprecated Usar exportInvoice(id, "pdf") */
   exportPDF: async (id: number | string): Promise<Blob> => {
     return invoiceService.exportInvoice(id, "pdf");

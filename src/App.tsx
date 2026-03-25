@@ -30,7 +30,7 @@ import InvoiceEditPage from "@/features/invoices/InvoiceEditPage";
 import ReportsPage from "@/features/reports/ReportsPage";
 import ProfilePage from "@/features/profile/ProfilePage";
 import ConfiguracionPage from "@/pages/ConfiguracionPage";
-import IAHubPage from "@/pages/IAHubPage";
+
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,7 +69,6 @@ const App = () => (
           <Route path="/invoices/:id" element={<ProtectedRoute permission="invoices.view"><AppLayout><InvoiceDetailPage /></AppLayout></ProtectedRoute>} />
           <Route path="/invoices/:id/edit" element={<ProtectedRoute permission="invoices.edit"><AppLayout><InvoiceEditPage /></AppLayout></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute permission="reports.view"><AppLayout><ReportsPage /></AppLayout></ProtectedRoute>} />
-          <Route path="/ia-hub" element={<ProtectedRoute><AppLayout><IAHubPage /></AppLayout></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><AppLayout><ProfilePage /></AppLayout></ProtectedRoute>} />
           <Route path="/configuracion" element={<ProtectedRoute permission="config.view"><AppLayout><ConfiguracionPage /></AppLayout></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />

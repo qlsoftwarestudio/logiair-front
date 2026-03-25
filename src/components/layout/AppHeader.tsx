@@ -36,12 +36,6 @@ export function AppHeader() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="relative text-muted-foreground hover:text-foreground transition-colors">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary" />
-        </button>
-
-        <div className="h-6 w-px bg-border" />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

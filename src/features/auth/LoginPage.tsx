@@ -90,12 +90,6 @@ export default function LoginPage() {
           Iniciar sesión
         </Button>
 
-        <div className="text-center text-sm text-muted-foreground">
-          ¿No tenés cuenta?{" "}
-          <Link to="/onboarding" className="text-primary hover:underline font-medium">
-            Registrá tu empresa
-          </Link>
-        </div>
       </form>
     </AuthLayout>
   );

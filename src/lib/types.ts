@@ -30,6 +30,10 @@ export interface Customer {
   contactPhone?: string;
   address?: string;
   isActive?: boolean;
+  aiPreAlerts?: boolean;
+  aiPdfExtraction?: boolean;
+  aiAutoReports?: boolean;
+  aiBillingSuggestions?: boolean;
   createdAt: string;
   updatedAt?: string;
 }

@@ -33,6 +33,7 @@ export const API_URLS = {
     BY_CUSTOMER_MONTHLY: (customerId: number | string) => `/api/invoices/customer/${customerId}/monthly`,
     GENERATE_MONTHLY: "/api/invoices/generate-monthly",
     EXPORT: (id: number | string) => `/api/invoices/export/${id}`,
+    EXPORT_DATERANGE: "/api/invoices/export/daterange",
   },
   REPORTS: {
     DASHBOARD: "/api/reports/dashboard",
