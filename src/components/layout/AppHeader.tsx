@@ -29,7 +29,7 @@ export function AppHeader() {
     .slice(0, 2) || "??";
 
   return (
-    <header className="h-14 border-b border-border flex items-center justify-between px-4 gap-4 bg-card/50 backdrop-blur-sm">
+    <header className="h-14 border-b border-border flex items-center justify-between px-4 gap-4 bg-card/50 backdrop-blur-sm relative z-50">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
         <GlobalSearch />
