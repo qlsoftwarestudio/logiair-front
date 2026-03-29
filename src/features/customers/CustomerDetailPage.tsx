@@ -15,7 +15,7 @@ import { useState } from "react";
 export default function CustomerDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentCustomer: customer, loading, fetchCustomer, deleteCustomer, updateCustomer, clearCurrent } = useCustomerStore();
+  const { currentCustomer: customer, loading, fetchCustomer, deleteCustomer, updateCustomer, updateAIConfig, clearCurrent } = useCustomerStore();
   const { awbs, fetchAWBs } = useAWBStore();
   const { hasPermission } = useAuthStore();
   const { toast } = useToast();
@@ -125,7 +125,7 @@ export default function CustomerDetailPage() {
       {hasPermission("customers.edit") && (
         <CustomerAIHub
           customer={customer}
-          onUpdate={async (id, data) => { await updateCustomer(id, data); }}
+          onUpdateAI={async (id, data) => { await updateAIConfig(id, data); }}
         />
       )}
 

@@ -42,18 +42,20 @@ const AI_FEATURES: AIFeature[] = [
 interface CustomerAIHubProps {
   customer: Customer;
   onUpdate?: (customerId: number, data: Partial<Customer>) => Promise<void>;
+  onUpdateAI?: (customerId: number, data: Partial<Customer>) => Promise<void>;
   editable?: boolean;
 }
 
-export function CustomerAIHub({ customer, onUpdate, editable = true }: CustomerAIHubProps) {
+export function CustomerAIHub({ customer, onUpdate, onUpdateAI, editable = true }: CustomerAIHubProps) {
   const { toast } = useToast();
   const [toggling, setToggling] = useState<string | null>(null);
 
   const handleToggle = async (key: AIFeature["key"], checked: boolean) => {
-    if (!onUpdate) return;
+    const handler = onUpdateAI || onUpdate;
+    if (!handler) return;
     setToggling(key);
     try {
-      await onUpdate(customer.id, { [key]: checked });
+      await handler(customer.id, { [key]: checked });
       toast({
         title: checked ? "Feature activada" : "Feature desactivada",
         description: `${AI_FEATURES.find((f) => f.key === key)?.title} fue ${checked ? "activada" : "desactivada"} para ${customer.companyName}.`,

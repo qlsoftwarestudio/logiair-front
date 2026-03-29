@@ -49,6 +49,11 @@ export const customerService = {
     return response.data;
   },
 
+  updateAIConfig: async (id: number | string, data: Partial<Customer>): Promise<Customer> => {
+    const response = await api.patch(API_URLS.CUSTOMERS.AI_CONFIG(id), data);
+    return response.data;
+  },
+
   deleteCustomer: async (id: number | string): Promise<void> => {
     await api.delete(API_URLS.CUSTOMERS.BY_ID(id));
   },

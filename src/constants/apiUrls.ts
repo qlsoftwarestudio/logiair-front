@@ -21,6 +21,7 @@ export const API_URLS = {
   CUSTOMERS: {
     BASE: "/api/customers",
     BY_ID: (id: number | string) => `/api/customers/${id}`,
+    AI_CONFIG: (id: number | string) => `/api/customers/${id}/ai-config`,
     SEARCH: "/api/customers/search",
     LIST: "/api/customers/list",
   },

@@ -21,6 +21,7 @@ interface CustomerState {
   fetchCustomer: (id: string | number) => Promise<void>;
   createCustomer: (data: Partial<Customer>) => Promise<Customer>;
   updateCustomer: (id: string | number, data: Partial<Customer>) => Promise<void>;
+  updateAIConfig: (id: string | number, data: Partial<Customer>) => Promise<void>;
   deleteCustomer: (id: string | number) => Promise<void>;
   clearCurrent: () => void;
 }
@@ -103,6 +104,21 @@ export const useCustomerStore = create<CustomerState>((set, get) => ({
       }));
     } catch (err: any) {
       set({ error: err.response?.data?.message || err.message, loading: false });
+    }
+  },
+
+  updateAIConfig: async (id, data) => {
+    set({ loading: true, error: null });
+    try {
+      const updated = await customerService.updateAIConfig(id, data);
+      set((s) => ({
+        customers: s.customers.map((c) => (c.id === updated.id ? updated : c)),
+        currentCustomer: s.currentCustomer?.id === updated.id ? updated : s.currentCustomer,
+        loading: false,
+      }));
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || err.message, loading: false });
+      throw err;
     }
   },
 
