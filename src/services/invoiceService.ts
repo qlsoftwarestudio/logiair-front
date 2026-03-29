@@ -79,7 +79,7 @@ export const invoiceService = {
   exportDateRange: async (params: {
     startDate: string;
     endDate: string;
-    customerId?: number | string;
+    companyName?: string;
     includeCharts?: boolean;
     format?: "excel" | "pdf";
   }): Promise<Blob> => {
@@ -88,7 +88,7 @@ export const invoiceService = {
       endDate: params.endDate,
       format: params.format || "excel",
     };
-    if (params.customerId) queryParams.customerId = params.customerId;
+    if (params.companyName) queryParams.companyName = params.companyName;
     if (params.includeCharts) queryParams.includeCharts = params.includeCharts;
 
     const response = await api.get(API_URLS.INVOICES.EXPORT_DATERANGE, {

@@ -34,7 +34,7 @@ export function DateRangeExportDialog() {
 
   const [startDate, setStartDate] = useState(lastMonth);
   const [endDate, setEndDate] = useState(today);
-  const [customerId, setCustomerId] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [includeCharts, setIncludeCharts] = useState(false);
   const [exportFormat, setExportFormat] = useState<"excel" | "pdf">("excel");
 
@@ -69,9 +69,6 @@ export function DateRangeExportDialog() {
       }
     }
 
-    if (customerId && (isNaN(Number(customerId)) || Number(customerId) <= 0)) {
-      newErrors.push({ field: "customerId", message: "El ID de cliente debe ser un número válido" });
-    }
 
     setErrors(newErrors);
     return newErrors.length === 0;
@@ -87,7 +84,7 @@ export function DateRangeExportDialog() {
       const blob = await invoiceService.exportDateRange({
         startDate,
         endDate,
-        customerId: customerId || undefined,
+        companyName: companyName.trim() || undefined,
         includeCharts,
         format: exportFormat,
       });
@@ -98,7 +95,7 @@ export function DateRangeExportDialog() {
 
       const fmtStart = startDate.replace(/-/g, "-");
       const fmtEnd = endDate.replace(/-/g, "-");
-      const customerSuffix = customerId ? `_Cliente_${customerId}` : "";
+      const customerSuffix = companyName.trim() ? `_${companyName.trim().replace(/\s+/g, "_")}` : "";
       const chartsSuffix = includeCharts ? "_ConGraficos" : "";
       const ext = exportFormat === "excel" ? "xlsx" : "pdf";
 
@@ -215,18 +212,14 @@ export function DateRangeExportDialog() {
 
           {/* Cliente opcional */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">ID Cliente (opcional)</Label>
+            <Label className="text-xs text-muted-foreground">Cliente (opcional)</Label>
             <Input
-              type="number"
-              value={customerId}
-              onChange={(e) => { setCustomerId(e.target.value); setErrors([]); }}
-              placeholder="Ej: 123 — Dejá vacío para todos"
+              type="text"
+              value={companyName}
+              onChange={(e) => { setCompanyName(e.target.value); setErrors([]); }}
+              placeholder="Ej: Acme S.A. — Dejá vacío para todos"
               className="bg-secondary border-border"
-              min={1}
             />
-            {getFieldError("customerId") && (
-              <p className="text-xs text-destructive">{getFieldError("customerId")}</p>
-            )}
           </div>
 
           {/* Formato */}
