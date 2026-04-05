@@ -17,6 +17,9 @@ export const API_URLS = {
     BY_STATUS: (status: string) => `/api/air-waybills/status/${status}`,
     BY_CUSTOMER: (customerId: number | string) => `/api/air-waybills/customer/${customerId}`,
     PENDING: "/api/air-waybills/pending",
+    BY_TYPE: (type: string) => `/api/air-waybills/type/${type}`,
+    CHILDREN: (parentId: number | string) => `/api/air-waybills/${parentId}/children`,
+    EXPORT_EXCEL: "/api/air-waybills/export/excel",
   },
   CUSTOMERS: {
     BASE: "/api/customers",
@@ -35,6 +38,7 @@ export const API_URLS = {
     GENERATE_MONTHLY: "/api/invoices/generate-monthly",
     EXPORT: (id: number | string) => `/api/invoices/export/${id}`,
     EXPORT_DATERANGE: "/api/invoices/export/daterange",
+    BY_MANIFEST: (manifestNumber: string) => `/api/invoices/manifest/${manifestNumber}/air-waybills`,
   },
   REPORTS: {
     DASHBOARD: "/api/reports/dashboard",

@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAWBStore } from "@/stores/awbStore";
 import { useAuthStore } from "@/stores/authStore";
+import { awbService } from "@/services/awbService";
 import { motion } from "framer-motion";
-import { ArrowLeft, Edit, Trash2, ChevronRight, Plane, MapPin, Calendar, FileText, User } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, ChevronRight, Plane, Calendar, FileText, Package, Weight, Users, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { AWB_WORKFLOW, STATUS_COLORS, STATUS_LABELS, AWB_TRANSITIONS } from "@/constants/awbStatuses";
-import type { AWBStatus } from "@/lib/types";
+import { AWBTypeBadge } from "@/components/awb/AWBTypeBadge";
+import type { AWBStatus, AirWaybill } from "@/lib/types";
 
 export default function AWBDetailPage() {
   const { id } = useParams();
@@ -22,11 +24,23 @@ export default function AWBDetailPage() {
   const [newStatus, setNewStatus] = useState("");
   const [statusObs, setStatusObs] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [childAwbs, setChildAwbs] = useState<AirWaybill[]>([]);
+  const [loadingChildren, setLoadingChildren] = useState(false);
 
   useEffect(() => {
     if (id) fetchAWB(id);
     return () => clearCurrent();
   }, [id]);
+
+  useEffect(() => {
+    if (awb?.awbType === "MASTER") {
+      setLoadingChildren(true);
+      awbService.getChildren(awb.id)
+        .then(setChildAwbs)
+        .catch(() => setChildAwbs(awb.childAwbs || []))
+        .finally(() => setLoadingChildren(false));
+    }
+  }, [awb?.id, awb?.awbType]);
 
   if (loading || !awb) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando...</div>;
@@ -67,7 +81,10 @@ export default function AWBDetailPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground font-mono">{awb.awbNumber}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-foreground font-mono">{awb.awbNumber}</h1>
+              <AWBTypeBadge type={awb.awbType} />
+            </div>
             <p className="text-sm text-muted-foreground">{awb.customer?.companyName} · {awb.operationType === "IMPO" ? "Importación" : "Exportación"}</p>
           </div>
         </div>
@@ -129,6 +146,119 @@ export default function AWBDetailPage() {
         </div>
       </div>
 
+      {/* Cargo & Participants */}
+      {(awb.pieces != null || awb.weightKg != null || awb.shipper || awb.consignee) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(awb.pieces != null || awb.weightKg != null) && (
+            <div className="glass-card p-5 space-y-3">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detalle de carga</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Bultos</p>
+                    <p className="text-lg font-bold text-foreground">{awb.pieces ?? "—"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Weight className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Peso (Kg)</p>
+                    <p className="text-lg font-bold text-foreground">{awb.weightKg != null ? awb.weightKg.toLocaleString("es-AR", { maximumFractionDigits: 2 }) : "—"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {(awb.shipper || awb.consignee) && (
+            <div className="glass-card p-5 space-y-3">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Intervinientes</h3>
+              <div className="space-y-2">
+                {awb.shipper && (
+                  <div className="flex items-start gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Remitente</p>
+                      <p className="text-sm font-medium text-foreground">{awb.shipper}</p>
+                    </div>
+                  </div>
+                )}
+                {awb.consignee && (
+                  <div className="flex items-start gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Destinatario</p>
+                      <p className="text-sm font-medium text-foreground">{awb.consignee}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Hierarchy: Parent link for HOUSE */}
+      {awb.awbType === "HOUSE" && awb.parentAwbId && (
+        <div className="glass-card p-5 space-y-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            <GitBranch className="h-4 w-4" /> Jerarquía
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Guía madre:</span>
+            <Link to={`/awbs/${awb.parentAwbId}`} className="text-sm font-mono font-semibold text-primary hover:underline">
+              {awb.parentAwbNumber || `#${awb.parentAwbId}`}
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Hierarchy: Children table for MASTER */}
+      {awb.awbType === "MASTER" && (
+        <div className="glass-card p-6">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+            <GitBranch className="h-4 w-4" /> Guías Hijas ({childAwbs.length})
+          </h3>
+          {loadingChildren ? (
+            <p className="text-sm text-muted-foreground">Cargando...</p>
+          ) : childAwbs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No hay guías hijas asociadas</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">AWB</th>
+                    <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">Cliente</th>
+                    <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Bultos</th>
+                    <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Peso Kg</th>
+                    <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {childAwbs.map((child) => {
+                    const sc = STATUS_COLORS[child.status] || { bg: "bg-muted", text: "text-muted-foreground" };
+                    return (
+                      <tr
+                        key={child.id}
+                        onClick={() => navigate(`/awbs/${child.id}`)}
+                        className="border-b border-border/30 hover:bg-secondary/50 cursor-pointer transition-colors"
+                      >
+                        <td className="p-3 font-mono font-semibold text-sm text-foreground">{child.awbNumber}</td>
+                        <td className="p-3 text-sm text-foreground">{child.customer?.companyName || "—"}</td>
+                        <td className="p-3 text-sm text-right text-muted-foreground">{child.pieces ?? "—"}</td>
+                        <td className="p-3 text-sm text-right text-muted-foreground">{child.weightKg != null ? child.weightKg.toLocaleString("es-AR", { maximumFractionDigits: 2 }) : "—"}</td>
+                        <td className="p-3"><span className={`status-badge text-xs ${sc.bg} ${sc.text}`}>{STATUS_LABELS[child.status] || child.status}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Timeline */}
       <div className="glass-card p-6">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">Timeline operativo</h3>
@@ -145,7 +275,7 @@ export default function AWBDetailPage() {
                 className="flex gap-4 pb-6 last:pb-0"
               >
                 <div className="flex flex-col items-center">
-              <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
                     isCompleted ? "border-success bg-success" :
                     "border-border bg-secondary"
                   }`} />

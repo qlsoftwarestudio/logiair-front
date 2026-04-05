@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function AWBEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentAWB: awb, loading, fetchAWB, updateAWB, clearCurrent } = useAWBStore();
+  const { currentAWB: awb, loading, fetchAWB, updateAWB, clearCurrent, awbs, fetchAWBs } = useAWBStore();
   const { customers, fetchCustomers } = useCustomerStore();
   const { toast } = useToast();
   const [form, setForm] = useState<any>(null);
@@ -21,6 +21,7 @@ export default function AWBEditPage() {
   useEffect(() => {
     if (id) fetchAWB(id);
     fetchCustomers();
+    fetchAWBs();
     return () => clearCurrent();
   }, [id]);
 
@@ -36,12 +37,19 @@ export default function AWBEditPage() {
         arrivalOrDepartureDate: awb.arrivalOrDepartureDate || "",
         manifestNumber: awb.manifestNumber || "",
         observations: awb.observations || "",
+        pieces: awb.pieces != null ? String(awb.pieces) : "",
+        weightKg: awb.weightKg != null ? String(awb.weightKg) : "",
+        shipper: awb.shipper || "",
+        consignee: awb.consignee || "",
+        awbType: awb.awbType || "MASTER",
+        parentAwbId: awb.parentAwbId ? String(awb.parentAwbId) : "",
       });
     }
   }, [awb]);
 
   if (!form) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando...</div>;
 
+  const masterAwbs = awbs.filter((a) => a.awbType === "MASTER" && a.id !== Number(id));
   const set = (field: string, value: string) => setForm((f: any) => ({ ...f, [field]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,8 +57,21 @@ export default function AWBEditPage() {
     if (!id) return;
     try {
       await updateAWB(id, {
-        ...form,
+        awbNumber: form.awbNumber,
         customerId: Number(form.customerId),
+        operationType: form.operationType,
+        airline: form.airline,
+        origin: form.origin,
+        destination: form.destination,
+        arrivalOrDepartureDate: form.arrivalOrDepartureDate,
+        manifestNumber: form.manifestNumber || undefined,
+        observations: form.observations || undefined,
+        pieces: form.pieces ? Number(form.pieces) : undefined,
+        weightKg: form.weightKg ? Number(form.weightKg) : undefined,
+        shipper: form.shipper || undefined,
+        consignee: form.consignee || undefined,
+        awbType: form.awbType,
+        parentAwbId: form.awbType === "HOUSE" && form.parentAwbId ? Number(form.parentAwbId) : undefined,
       });
       toast({ title: "Guía actualizada" });
       navigate(`/awbs/${id}`);
@@ -73,6 +94,7 @@ export default function AWBEditPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="glass-card p-6 space-y-5">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Datos principales</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Número AWB</Label>
@@ -102,6 +124,58 @@ export default function AWBEditPage() {
               <Input value={form.destination} onChange={(e) => set("destination", e.target.value.toUpperCase())} className="bg-secondary border-border font-mono" maxLength={3} required />
             </div>
           </div>
+
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-4">Tipo de guía</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Tipo</Label>
+              <Select value={form.awbType} onValueChange={(v) => set("awbType", v)}>
+                <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MASTER">Master (Guía madre)</SelectItem>
+                  <SelectItem value="HOUSE">House (Guía hija)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.awbType === "HOUSE" && (
+              <div className="space-y-2">
+                <Label>Guía madre</Label>
+                <Select value={form.parentAwbId} onValueChange={(v) => set("parentAwbId", v)}>
+                  <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Seleccionar guía madre" /></SelectTrigger>
+                  <SelectContent>
+                    {masterAwbs.map((a) => (
+                      <SelectItem key={a.id} value={String(a.id)}>{a.awbNumber}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-4">Detalle de carga</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Bultos (pieces)</Label>
+              <Input type="number" min={0} value={form.pieces} onChange={(e) => set("pieces", e.target.value)} placeholder="Cantidad" className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-2">
+              <Label>Peso (Kg)</Label>
+              <Input type="number" min={0} step="0.01" value={form.weightKg} onChange={(e) => set("weightKg", e.target.value)} placeholder="Peso" className="bg-secondary border-border" />
+            </div>
+          </div>
+
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-4">Intervinientes</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Remitente (Shipper)</Label>
+              <Input value={form.shipper} onChange={(e) => set("shipper", e.target.value)} placeholder="Remitente" className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-2">
+              <Label>Destinatario (Consignee)</Label>
+              <Input value={form.consignee} onChange={(e) => set("consignee", e.target.value)} placeholder="Destinatario" className="bg-secondary border-border" />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Observaciones</Label>
             <Textarea value={form.observations} onChange={(e) => set("observations", e.target.value)} className="bg-secondary border-border" rows={3} />

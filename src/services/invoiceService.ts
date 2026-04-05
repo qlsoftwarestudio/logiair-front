@@ -1,6 +1,6 @@
 import api from "./api";
 import { API_URLS } from "@/constants/apiUrls";
-import type { Invoice, InvoiceStatus, PageResponse } from "@/lib/types";
+import type { AirWaybill, Invoice, InvoiceStatus, PageResponse } from "@/lib/types";
 
 interface InvoiceListParams {
   search?: string;
@@ -95,6 +95,11 @@ export const invoiceService = {
       params: queryParams,
       responseType: "blob",
     });
+    return response.data;
+  },
+
+  getAWBsByManifest: async (manifestNumber: string): Promise<AirWaybill[]> => {
+    const response = await api.get(API_URLS.INVOICES.BY_MANIFEST(manifestNumber));
     return response.data;
   },
 

@@ -11,6 +11,8 @@ export interface User {
 
 export type OperationType = "IMPO" | "EXPO";
 
+export type AWBType = "MASTER" | "HOUSE";
+
 export type AWBStatus =
   | "PRE_ALERT"
   | "AWB_REGISTERED"
@@ -53,6 +55,18 @@ export interface AirWaybill {
   createdBy?: User;
   createdAt: string;
   updatedAt?: string;
+
+  // Phase 1: Enriched fields
+  pieces?: number;
+  weightKg?: number;
+  shipper?: string;
+  consignee?: string;
+
+  // Phase 2: Master/House hierarchy
+  awbType?: AWBType;
+  parentAwbId?: number;
+  parentAwbNumber?: string;
+  childAwbs?: AirWaybill[];
 }
 
 export interface InvoiceItem {
@@ -61,6 +75,7 @@ export interface InvoiceItem {
   amount: number;
   airWaybillId?: number | null;
   airWaybill?: { id: number; awbNumber: string };
+  manifestNumber?: string;
 }
 
 export type InvoiceStatus = "PENDING" | "PAID" | "CANCELLED";

@@ -10,10 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AppBreadcrumb } from "@/components/molecules/AppBreadcrumb";
-import type { OperationType } from "@/lib/types";
+import type { OperationType, AWBType } from "@/lib/types";
 
 export default function AWBCreatePage() {
-  const { createAWB, loading } = useAWBStore();
+  const { createAWB, loading, awbs, fetchAWBs } = useAWBStore();
   const { customers, fetchCustomers } = useCustomerStore();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,11 +28,20 @@ export default function AWBCreatePage() {
     arrivalOrDepartureDate: "",
     manifestNumber: "",
     observations: "",
+    pieces: "",
+    weightKg: "",
+    shipper: "",
+    consignee: "",
+    awbType: "MASTER" as AWBType,
+    parentAwbId: "",
   });
 
-  useEffect(() => { fetchCustomers(); }, []);
+  useEffect(() => {
+    fetchCustomers();
+    fetchAWBs();
+  }, []);
 
-  const selectedClient = customers.find((c) => String(c.id) === form.customerId);
+  const masterAwbs = awbs.filter((a) => a.awbType === "MASTER");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,8 +54,14 @@ export default function AWBCreatePage() {
         origin: form.origin,
         destination: form.destination,
         arrivalOrDepartureDate: form.arrivalOrDepartureDate,
-        manifestNumber: form.manifestNumber,
-        observations: form.observations,
+        manifestNumber: form.manifestNumber || undefined,
+        observations: form.observations || undefined,
+        pieces: form.pieces ? Number(form.pieces) : undefined,
+        weightKg: form.weightKg ? Number(form.weightKg) : undefined,
+        shipper: form.shipper || undefined,
+        consignee: form.consignee || undefined,
+        awbType: form.awbType,
+        parentAwbId: form.awbType === "HOUSE" && form.parentAwbId ? Number(form.parentAwbId) : undefined,
       });
       toast({ title: "Guía creada", description: `${form.awbNumber} registrada exitosamente` });
       navigate("/awbs");
@@ -76,7 +91,7 @@ export default function AWBCreatePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Número AWB *</Label>
-              <Input value={form.awbNumber} onChange={(e) => set("awbNumber", e.target.value)} placeholder="AWB-XXX-XXXX" className="bg-secondary border-border" required />
+              <Input value={form.awbNumber} onChange={(e) => set("awbNumber", e.target.value)} placeholder="123-45678901" className="bg-secondary border-border" required />
             </div>
             <div className="space-y-2">
               <Label>Tipo de operación *</Label>
@@ -105,6 +120,33 @@ export default function AWBCreatePage() {
             </div>
           </div>
 
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-4">Tipo de guía</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Tipo *</Label>
+              <Select value={form.awbType} onValueChange={(v) => set("awbType", v)}>
+                <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MASTER">Master (Guía madre)</SelectItem>
+                  <SelectItem value="HOUSE">House (Guía hija)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.awbType === "HOUSE" && (
+              <div className="space-y-2">
+                <Label>Guía madre</Label>
+                <Select value={form.parentAwbId} onValueChange={(v) => set("parentAwbId", v)}>
+                  <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Seleccionar guía madre" /></SelectTrigger>
+                  <SelectContent>
+                    {masterAwbs.map((a) => (
+                      <SelectItem key={a.id} value={String(a.id)}>{a.awbNumber}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-4">Ruta y fechas</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -122,6 +164,30 @@ export default function AWBCreatePage() {
             <div className="space-y-2">
               <Label>Nº Manifiesto</Label>
               <Input value={form.manifestNumber} onChange={(e) => set("manifestNumber", e.target.value)} placeholder="MAN-XXXX-XXXX" className="bg-secondary border-border" />
+            </div>
+          </div>
+
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-4">Detalle de carga</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Bultos (pieces)</Label>
+              <Input type="number" min={0} value={form.pieces} onChange={(e) => set("pieces", e.target.value)} placeholder="Cantidad de bultos" className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-2">
+              <Label>Peso (Kg)</Label>
+              <Input type="number" min={0} step="0.01" value={form.weightKg} onChange={(e) => set("weightKg", e.target.value)} placeholder="Peso en kilogramos" className="bg-secondary border-border" />
+            </div>
+          </div>
+
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider pt-4">Intervinientes</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Remitente (Shipper)</Label>
+              <Input value={form.shipper} onChange={(e) => set("shipper", e.target.value)} placeholder="Nombre del remitente" className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-2">
+              <Label>Destinatario (Consignee)</Label>
+              <Input value={form.consignee} onChange={(e) => set("consignee", e.target.value)} placeholder="Nombre del destinatario" className="bg-secondary border-border" />
             </div>
           </div>
 

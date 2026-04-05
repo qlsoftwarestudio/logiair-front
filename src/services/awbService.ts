@@ -1,11 +1,12 @@
 import api from "./api";
 import { API_URLS } from "@/constants/apiUrls";
-import type { AirWaybill, AWBStatus, PageResponse } from "@/lib/types";
+import type { AirWaybill, AWBStatus, AWBType, PageResponse } from "@/lib/types";
 
 interface AWBListParams {
   search?: string;
   status?: string;
   type?: string;
+  awbType?: string;
   page?: number;
   size?: number;
   sortBy?: string;
@@ -70,5 +71,36 @@ export const awbService = {
   getAWBsByCustomer: async (customerId: number | string): Promise<AirWaybill[]> => {
     const response = await api.get(API_URLS.AWBS.BY_CUSTOMER(customerId));
     return Array.isArray(response.data) ? response.data : response.data.content || [];
+  },
+
+  getAWBsByType: async (type: AWBType, params?: { page?: number; size?: number }): Promise<PageResponse<AirWaybill>> => {
+    const response = await api.get(API_URLS.AWBS.BY_TYPE(type), { params });
+    return response.data;
+  },
+
+  getChildren: async (parentId: number | string): Promise<AirWaybill[]> => {
+    const response = await api.get(API_URLS.AWBS.CHILDREN(parentId));
+    return Array.isArray(response.data) ? response.data : response.data.content || [];
+  },
+
+  exportExcel: async (params: {
+    startDate?: string;
+    endDate?: string;
+    customerId?: number;
+    awbType?: AWBType;
+    status?: string;
+  }): Promise<Blob> => {
+    const queryParams: Record<string, any> = {};
+    if (params.startDate) queryParams.startDate = params.startDate;
+    if (params.endDate) queryParams.endDate = params.endDate;
+    if (params.customerId) queryParams.customerId = params.customerId;
+    if (params.awbType) queryParams.awbType = params.awbType;
+    if (params.status) queryParams.status = params.status;
+
+    const response = await api.get(API_URLS.AWBS.EXPORT_EXCEL, {
+      params: queryParams,
+      responseType: "blob",
+    });
+    return response.data;
   },
 };
